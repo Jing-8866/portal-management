@@ -54,7 +54,7 @@
                         <i class="fas fa-search"></i>
                         <input type="text" id="searchInput" placeholder="搜索用户名/姓名/邮箱/手机..." oninput="applyFilter()" autocomplete="nope">
                     </div>
-                    <span class="filter-label" id="resultSummary">共 0 人</span>
+                    <span class="filter-label" id="resultSummary">共 0 人无任何系统权限</span>
                 </div>
                 <div class="toolbar-right">
                     <button class="btn btn-secondary" onclick="loadUsers()"><i class="fas fa-sync-alt"></i> 刷新</button>
@@ -118,7 +118,7 @@ function applyFilter() {
 }
 
 function renderTable() {
-    document.getElementById('resultSummary').textContent = '共 ' + filteredUsers.length + ' 人';
+    document.getElementById('resultSummary').textContent = '共 ' + filteredUsers.length + ' 人无任何系统权限';
     var start = (userPage - 1) * userPageSize;
     var pageData = filteredUsers.slice(start, start + userPageSize);
     var tbody = document.getElementById('userTableBody');
