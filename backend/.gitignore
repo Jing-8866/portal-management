@@ -21,8 +21,8 @@ logs/
 # ==============================
 # 敏感配置文件（禁止提交）
 # ==============================
-config/secrets-*.properties
-config/secrets-*.yml
+**/secrets-*.properties
+**/secrets-*.yml
 
 # OS
 .DS_Store
