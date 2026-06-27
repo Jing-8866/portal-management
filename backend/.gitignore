@@ -25,7 +25,7 @@ logs/
 **/secrets-*.yml
 
 # 但允许提交根目录下 config/secrets-example.properties 作为安全配置模板
-!../config/secrets-example.properties
+!config/secrets-example.properties
 
 # OS
 .DS_Store
