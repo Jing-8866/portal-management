@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人信息 - 系统门户管理平台</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .profile-container { max-width: 800px; margin: 0 auto; padding: 24px; }
+        .profile-section { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px; margin-bottom: 24px; }
+        .profile-section h2 { font-size: 16px; font-weight: 600; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+        .profile-form { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .profile-form .full-width { grid-column: 1 / -1; }
+        .role-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+        .role-tag {
+            display: inline-flex; align-items: center; padding: 4px 12px;
+            background: #e6f7ff; color: #1890ff; border-radius: 4px; font-size: 13px;
+        }
+        .perm-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+        .perm-item {
+            padding: 8px 12px; background: #f6ffed; border-radius: 4px;
+            font-size: 13px; color: #52c41a;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <a href="index.html" style="display:flex;align-items:center;gap:12px;text-decoration:none;">
+                <div class="logo"><i class="fas fa-cubes"></i></div>
+                <h1>系统门户管理平台</h1>
+            </a>
+        </div>
+        <div class="header-right">
+            <div class="user-dropdown">
+                <div class="user-dropdown-trigger">
+                    <div class="user-avatar"><i class="fas fa-user"></i></div>
+                    <span class="user-name"></span>
+                </div>
+                <div class="user-dropdown-menu">
+                    <a href="profile.html"><i class="fas fa-id-card"></i> 个人信息</a>
+                    <a href="javascript:void(0)" onclick="showChangePwdModal()"><i class="fas fa-key"></i> 修改密码</a>
+                    <div class="divider"></div>
+                    <a href="javascript:void(0)" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> 退出登录</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="profile-container">
+        <div class="profile-section">
+            <div style="display:flex;justify-content:space-between;align-items:center;"><h2><i class="fas fa-user-circle"></i> 基本信息</h2><button class="btn btn-secondary" onclick="history.back()" style="font-size:13px;"><i class="fas fa-arrow-left"></i> 返回</button></div>
+            <div class="profile-form">
+                <div class="form-group">
+                    <label>用户名</label>
+                    <input type="text" id="prof-username" disabled autocomplete="nope">
+                </div>
+                <div class="form-group">
+                    <label>姓名</label>
+                    <input type="text" id="prof-realname" placeholder="请输入姓名" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label>邮箱</label>
+                    <input type="email" id="prof-email" placeholder="请输入邮箱" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label>手机</label>
+                    <input type="tel" id="prof-phone" placeholder="请输入手机号" autocomplete="off">
+                </div>
+                <div class="form-group full-width" style="text-align:right;">
+                    <button class="btn btn-primary" onclick="saveProfile()"><i class="fas fa-save"></i> 保存修改</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-section">
+            <h2><i class="fas fa-user-tag"></i> 角色信息</h2>
+            <div class="role-tags" id="roleTags">加载中...</div>
+        </div>
+
+        <div class="profile-section">
+            <h2><i class="fas fa-shield-alt"></i> 权限信息</h2>
+            <div class="perm-list" id="permList">加载中...</div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!isLoggedIn()) { window.location.href = 'login.html'; return; }
+            initUserDropdown();
+            loadProfile();
+        });
+
+        async function loadProfile() {
+            try {
+                const me = await request('/auth/me');
+                if (me) {
+                    document.getElementById('prof-username').value = me.username || '';
+                    document.getElementById('prof-realname').value = me.realName || '';
+                    document.getElementById('prof-email').value = me.email || '';
+                    document.getElementById('prof-phone').value = me.phone || '';
+                }
+
+                // 加载角色
+                if (me && me.id) {
+                    const roleIds = await request('/users/' + me.id + '/roles');
+                    if (roleIds && roleIds.length > 0) {
+                        const allRoles = await request('/roles') || [];
+                        document.getElementById('roleTags').innerHTML = roleIds.map(function(rid) {
+                            var r = allRoles.find(function(role){return role.id===rid;});
+                            var name = r ? r.roleName : '未知角色';
+                            return '<span class="role-tag"><i class="fas fa-tag"></i>&nbsp;' + name + '</span>';
+                        }).join('');
+                    } else {
+                        document.getElementById('roleTags').innerHTML = '<span style="color:#999">暂无角色</span>';
+                    }
+                }
+
+                // 加载权限
+                const detail = await request('/auth/me/detail');
+                if (detail && detail.permissions && detail.permissions.length > 0) {
+                    // 获取子系统列表用于匹配名称
+                    const subsystems = await request('/subsystems') || [];
+                    document.getElementById('permList').innerHTML = detail.permissions.map(function(p) {
+                        var sid = p.subsystemId || p.subsystem_id; var sys = subsystems.find(function(s){ return s.id === sid; });
+                        var sysName = sys ? sys.systemName : '子系统#'+sid;
+                        var permMap = {login:'登录权限', query:'查询权限', admin:'管理权限'};
+                        return '<div class="perm-item"><i class="fas fa-check-circle"></i> ' + sysName + ' - ' + (function(){var pt=p.permissionType||p.permission_type;return permMap[pt]||pt;})() + '</div>';
+                    }).join('');
+                } else {
+                    document.getElementById('permList').innerHTML = '<span style="color:#999">暂无权限</span>';
+                }
+            } catch (e) {
+                showToast('加载个人信息失败', 'error');
+            }
+        }
+
+        async function saveProfile() {
+            var body = {
+                realName: document.getElementById('prof-realname').value.trim(),
+                email: document.getElementById('prof-email').value.trim(),
+                phone: document.getElementById('prof-phone').value.trim()
+            };
+            try {
+                await request('/auth/profile', { method: 'PUT', body: JSON.stringify(body) });
+                showToast('保存成功', 'success');
+                // 更新本地缓存
+                var user = getCurrentUser();
+                if (user) {
+                    user.realName = body.realName;
+                    user.email = body.email;
+                    user.phone = body.phone;
+                    setCurrentUser(user);
+                }
+            } catch (e) {
+                showToast(e.message || '保存失败', 'error');
+            }
+        }
+    </script>
+</body>
+</html>

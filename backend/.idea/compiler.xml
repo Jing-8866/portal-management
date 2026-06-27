@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="portal-common" />
+        <module name="portal-dbmgmt" />
+        <module name="portal-order" />
+        <module name="portal-main" />
+        <module name="portal-log" />
+      </profile>
+    </annotationProcessing>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="portal-common" options="-parameters" />
+      <module name="portal-dbmgmt" options="-parameters" />
+      <module name="portal-log" options="-parameters" />
+      <module name="portal-main" options="-parameters" />
+      <module name="portal-management" options="" />
+      <module name="portal-order" options="-parameters" />
+    </option>
+  </component>
+</project>

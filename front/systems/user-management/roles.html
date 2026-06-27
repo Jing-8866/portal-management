@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>角色管理 - 系统门户管理平台</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="layout">
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo"><i class="fas fa-users-cog"></i></div>
+            <h2>用户管理系统</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-group-title">用户管理</div>
+            <a class="nav-item" href="index.html" data-page="users"><i class="fas fa-users"></i> 用户管理</a>
+            <a class="nav-item" href="users-no-perm.html" data-page="users-no-perm"><i class="fas fa-user-slash"></i> 查看无权限用户</a>
+            <div class="nav-group-title">角色管理</div>
+            <a class="nav-item" href="roles.html" data-page="roles"><i class="fas fa-user-shield"></i> 角色管理</a>
+            <a class="nav-item" href="role-assign.html" data-page="role-assign"><i class="fas fa-user-plus"></i> 用户角色分配</a>
+            <a class="nav-item" href="user-roles.html" data-page="user-roles"><i class="fas fa-search"></i> 查询用户角色</a>
+            <div class="nav-group-title">权限管理</div>
+            <a class="nav-item" href="perm-menu.html" data-page="perm-menu"><i class="fas fa-key"></i> 子系统权限分配</a>
+            <a class="nav-item" href="perm-view.html" data-page="perm-view"><i class="fas fa-eye"></i> 系统权限查看</a>
+            <a class="nav-item" href="perm-data.html" data-page="perm-data"><i class="fas fa-database"></i> 数据权限管理</a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="../../index.html"><i class="fas fa-arrow-left"></i> 返回门户首页</a>
+        </div>
+    </div>
+    <div class="main-content">
+        <div class="main-header">
+            <h2 id="pageTitle">角色管理</h2>
+            <div class="user-dropdown">
+                <div class="user-dropdown-trigger">
+                    <div class="user-avatar" style="width:32px;height:32px;font-size:12px;background:#3B82F6;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;"><i class="fas fa-user"></i></div>
+                    <span class="user-name" style="font-size:14px;"></span>
+                </div>
+                <div class="user-dropdown-menu">
+                    <a href="../../profile.html"><i class="fas fa-id-card"></i> 个人信息</a>
+                    <a href="javascript:void(0)" onclick="showChangePwdModal()"><i class="fas fa-key"></i> 修改密码</a>
+                    <div class="divider"></div>
+                    <a href="javascript:void(0)" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> 退出登录</a>
+                </div>
+            </div>
+        </div>
+        <div class="main-body">
+            <div class="toolbar">
+                <div class="toolbar-left">
+                    <div class="search-box"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="搜索角色名称..." oninput="applyFilter()" autocomplete="nope"></div>
+                    <select class="filter-select" id="statusFilter" onchange="applyFilter()">
+                        <option value="">全部状态</option><option value="1">启用</option><option value="0">停用</option>
+                    </select>
+                </div>
+                <div class="toolbar-right" id="adminBtns"></div>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>序号</th><th>角色名称</th><th>角色编码</th><th>描述</th><th>状态</th><th>操作</th></tr></thead>
+                    <tbody id="roleTableBody"></tbody>
+                </table>
+                <div class="pagination" id="pagination"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="roleModal">
+    <div class="modal">
+        <div class="modal-header"><h3 id="roleModalTitle">新增角色</h3><button class="modal-close" onclick="closeRoleModal()">&times;</button></div>
+        <div class="modal-body">
+            <input type="hidden" id="role-id">
+            <div class="form-group"><label>角色名称 *</label><input type="text" id="role-name" placeholder="请输入角色名称" autocomplete="off" data-clear-on-open="1"></div>
+            <div class="form-group"><label>角色编码 *</label><input type="text" id="role-code" placeholder="请输入角色编码" autocomplete="off" data-clear-on-open="1"></div>
+            <div class="form-group"><label>描述</label><textarea id="role-desc" rows="3" placeholder="请输入描述"></textarea></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeRoleModal()">取消</button>
+            <button class="btn btn-primary" onclick="handleSaveRole()">保存</button>
+        </div>
+    </div>
+</div>
+
+<script src="../../js/config.js"></script>
+<script>
+let allRoles = [], filteredRoles = [], rolePage = 1, rolePageSize = 10;
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (!isLoggedIn()) { window.location.href = '../../login.html'; return; }
+    initUserDropdown(); clearSearchInputs(); highlightNav(); loadRoles();
+    if (isAdmin()) {
+        document.getElementById('adminBtns').innerHTML = '<button class="btn btn-primary" onclick="openAddRole()"><i class="fas fa-plus"></i> 新增角色</button>';
+    }
+});
+function highlightNav() {
+    var page = window.location.pathname.split('/').pop();
+    document.querySelectorAll('.nav-item').forEach(function(item) {
+        var href = item.getAttribute('href');
+        if (href && href.split('/').pop() === page) item.classList.add('active');
+        else item.classList.remove('active');
+    });
+}
+async function loadRoles() {
+    try { allRoles = await request('/roles') || []; applyFilter(); } catch(e) { showToast('加载失败','error'); }
+}
+function applyFilter() {
+    var keyword = document.getElementById('searchInput').value.trim().toLowerCase();
+    var statusVal = document.getElementById('statusFilter').value;
+    filteredRoles = allRoles.filter(function(r) {
+        var mk = !keyword || (r.roleName||'').toLowerCase().includes(keyword) || (r.roleCode||'').toLowerCase().includes(keyword);
+        var ms = statusVal === '' || String(r.status) === statusVal;
+        return mk && ms;
+    });
+    filteredRoles.sort(function(a,b) { return (b.status||0)-(a.status||0); });
+    rolePage = 1; renderTable();
+}
+function renderTable() {
+    var start=(rolePage-1)*rolePageSize, pageData=filteredRoles.slice(start,start+rolePageSize);
+    var tbody = document.getElementById('roleTableBody');
+    if (!pageData.length) { tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;color:#999;">暂无数据</td></tr>'; }
+    else {
+        tbody.innerHTML = pageData.map(function(r,i) {
+            var badge = r.status===1?'<span class="status-badge status-active">启用</span>':'<span class="status-badge status-inactive">停用</span>';
+            var actions = '';
+            if (isAdmin()) {
+                actions = '<button class="btn btn-sm btn-primary" onclick="editRole('+r.id+')">编辑</button> <button class="btn btn-sm btn-danger" onclick="deleteRole('+r.id+')">删除</button> ';
+                actions += r.status===1 ? '<button class="btn btn-sm btn-warning" onclick="toggleRoleStatus('+r.id+',0)">停用</button>' : '<button class="btn btn-sm btn-success" onclick="toggleRoleStatus('+r.id+',1)">启用</button>';
+            }
+            return '<tr><td>'+(start+i+1)+'</td><td>'+(r.roleName||'')+'</td><td>'+(r.roleCode||'')+'</td><td>'+(r.description||'-')+'</td><td>'+badge+'</td><td>'+actions+'</td></tr>';
+        }).join('');
+    }
+    renderPagination();
+}
+function renderPagination() {
+    var total=filteredRoles.length, totalPages=Math.ceil(total/rolePageSize)||1;
+    var html='<div class="pagination-info">共 '+total+' 条</div><div class="pagination-btns">';
+    html+='<button '+(rolePage<=1?'disabled':'')+' onclick="goPage('+(rolePage-1)+')">‹</button>';
+    for(var p=1;p<=totalPages;p++) html+='<button class="'+(p===rolePage?'active':'')+'" onclick="goPage('+p+')">'+p+'</button>';
+    html+='<button '+(rolePage>=totalPages?'disabled':'')+' onclick="goPage('+(rolePage+1)+')">›</button></div>';
+    document.getElementById('pagination').innerHTML=html;
+}
+function goPage(p){rolePage=p;renderTable();}
+
+function openAddRole() {
+    document.getElementById('roleModalTitle').textContent='新增角色';
+    document.getElementById('role-id').value='';
+    document.getElementById('role-name').value='';
+    document.getElementById('role-code').value='';
+    document.getElementById('role-desc').value='';
+    document.getElementById('roleModal').style.display='flex';
+}
+function editRole(id) {
+    var r=allRoles.find(function(x){return x.id===id;});
+    if(!r)return;
+    document.getElementById('roleModalTitle').textContent='编辑角色';
+    document.getElementById('role-id').value=r.id;
+    document.getElementById('role-name').value=r.roleName||'';
+    document.getElementById('role-code').value=r.roleCode||'';
+    document.getElementById('role-desc').value=r.description||'';
+    document.getElementById('roleModal').style.display='flex';
+}
+function closeRoleModal(){document.getElementById('roleModal').style.display='none';}
+async function handleSaveRole() {
+    var id=document.getElementById('role-id').value;
+    var name=document.getElementById('role-name').value.trim();
+    var code=document.getElementById('role-code').value.trim();
+    if(!name||!code){showToast('请填写必填项','warning');return;}
+    var body={roleName:name,roleCode:code,description:document.getElementById('role-desc').value.trim()};
+    try {
+        if(id) { await request('/roles/'+id,{method:'PUT',body:JSON.stringify(body)}); showToast('修改成功','success'); }
+        else { await request('/roles',{method:'POST',body:JSON.stringify(body)}); showToast('新增成功','success'); }
+        closeRoleModal(); loadRoles();
+    } catch(e){showToast(e.message||'保存失败','error');}
+}
+async function deleteRole(id){
+    if(!confirm('确定删除？'))return;
+    try{await request('/roles/'+id,{method:'DELETE'});showToast('删除成功','success');loadRoles();}catch(e){showToast(e.message||'删除失败','error');}
+}
+async function toggleRoleStatus(id,newStatus){
+    try{await request('/roles/'+id+'/status?status='+newStatus,{method:'PUT'});showToast('操作成功','success');loadRoles();}catch(e){showToast(e.message||'操作失败','error');}
+}
+</script>
+</body>
+</html>

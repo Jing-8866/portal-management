@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>订单详情 - 订单管理系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .detail-card { background:#fff; border-radius:8px; padding:32px; box-shadow:0 1px 3px rgba(0,0,0,0.05); }
+        .detail-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid #f0f0f0; }
+        .detail-header h3 { font-size:18px; font-weight:600; }
+        .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+        .detail-item { }
+        .detail-item .label { font-size:13px; color:#999; margin-bottom:4px; }
+        .detail-item .value { font-size:15px; font-weight:500; color:#333; }
+        .detail-item.full { grid-column:1/-1; }
+        .status-tag { display:inline-flex; align-items:center; padding:4px 12px; border-radius:12px; font-size:13px; font-weight:500; }
+        .status-tag.pending { background:#FEF3C7; color:#D97706; }
+        .status-tag.processing { background:#DBEAFE; color:#2563EB; }
+        .status-tag.completed { background:#D1FAE5; color:#059669; }
+        .status-tag.cancelled { background:#FEE2E2; color:#DC2626; }
+        .amount-value { font-size:24px; font-weight:700; color:#F59E0B; }
+        .action-bar { margin-top:24px; padding-top:16px; border-top:1px solid #f0f0f0; display:flex; gap:12px; }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <div class="sidebar">
+        <div class="sidebar-header"><div class="logo"><i class="fas fa-cart-shopping"></i></div><h2>订单管理系统</h2></div>
+        <nav class="sidebar-nav">
+            <div class="nav-group-title">订单管理</div>
+            <a class="nav-item" href="index.html"><i class="fas fa-list-alt"></i> 订单列表</a>
+            <a class="nav-item" href="order-create.html"><i class="fas fa-plus-circle"></i> 新建订单</a>
+            <div class="nav-group-title">数据分析</div>
+            <a class="nav-item" href="order-stats.html"><i class="fas fa-chart-bar"></i> 订单统计</a>
+        </nav>
+        <div class="sidebar-footer"><a href="../../index.html"><i class="fas fa-arrow-left"></i> 返回门户首页</a></div>
+    </div>
+    <div class="main-content">
+        <div class="main-header">
+            <h2>订单详情</h2>
+            <div class="user-dropdown"><div class="user-dropdown-trigger"><div class="user-avatar"><i class="fas fa-user"></i></div><span class="user-name"></span></div><div class="user-dropdown-menu"><a href="../../profile.html"><i class="fas fa-id-card"></i> 个人信息</a><a href="javascript:void(0)" onclick="showChangePwdModal()"><i class="fas fa-key"></i> 修改密码</a><div class="divider"></div><a href="javascript:void(0)" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> 退出登录</a></div></div>
+        </div>
+        <div class="main-body">
+            <div style="margin-bottom:16px;"><button class="btn btn-secondary" onclick="goBackToList()"><i class="fas fa-arrow-left"></i> 返回列表</button></div>
+            <div class="detail-card" id="detailCard">加载中...</div>
+        </div>
+    </div>
+</div>
+<script src="../../js/config.js"></script>
+<script>
+var orderId;
+document.addEventListener('DOMContentLoaded', function(){
+    if(!isLoggedIn()){window.location.href='../../login.html';return;}
+    initUserDropdown(); highlightNav();
+    var params=new URLSearchParams(window.location.search);
+    orderId=params.get('id');
+    if(!orderId){showToast('缺少订单ID','error');return;}
+    loadDetail();
+});
+function highlightNav(){var page=window.location.pathname.split('/').pop();document.querySelectorAll('.nav-item').forEach(function(item){var href=item.getAttribute('href');if(href&&href.split('/').pop()===page)item.classList.add('active');else item.classList.remove('active');});}
+
+async function loadDetail(){
+    try{
+        var order=await request('/orders/'+orderId);
+        if(!order){document.getElementById('detailCard').innerHTML='<p style="color:#999;">订单不存在</p>';return;}
+        var statusMap={pending:'待处理',processing:'处理中',completed:'已完成',cancelled:'已取消'};
+        var statusHtml='<span class="status-tag '+(order.status||'')+'">'+( statusMap[order.status]||order.status)+'</span>';
+        var html='<div class="detail-header"><h3>'+order.orderNo+'</h3>'+statusHtml+'</div>';
+        html+='<div class="detail-grid">';
+        html+='<div class="detail-item"><div class="label">客户名称</div><div class="value">'+(order.customerName||'-')+'</div></div>';
+        html+='<div class="detail-item"><div class="label">订单金额</div><div class="amount-value">¥'+(order.amount||0).toFixed(2)+'</div></div>';
+        html+='<div class="detail-item"><div class="label">创建时间</div><div class="value">'+formatTime(order.createdTime)+'</div></div>';
+        html+='<div class="detail-item"><div class="label">更新时间</div><div class="value">'+formatTime(order.updatedTime)+'</div></div>';
+        html+='<div class="detail-item full"><div class="label">备注</div><div class="value">'+(order.description||'无')+'</div></div>';
+        html+='</div>';
+        // 操作按钮
+        if(isAdmin()&&(order.status==='pending'||order.status==='processing')){
+            html+='<div class="action-bar">';
+            if(order.status==='pending') html+='<button class="btn btn-primary" onclick="changeStatus(\'processing\')"><i class="fas fa-play"></i> 开始处理</button>';
+            html+='<button class="btn btn-success" style="background:#10B981;color:#fff;" onclick="changeStatus(\'completed\')"><i class="fas fa-check"></i> 标记完成</button>';
+            html+='<button class="btn btn-danger" style="background:#EF4444;color:#fff;" onclick="changeStatus(\'cancelled\')"><i class="fas fa-times"></i> 取消订单</button>';
+            html+='</div>';
+        }
+        document.getElementById('detailCard').innerHTML=html;
+    }catch(e){document.getElementById('detailCard').innerHTML='<p style="color:#ff4d4f;">加载失败</p>';}
+}
+async function changeStatus(status){
+    var statusMap={processing:'处理',completed:'完成',cancelled:'取消'};
+    if(!confirm('确定将订单状态改为「'+statusMap[status]+'」？'))return;
+    try{
+        await request('/orders/'+orderId+'/status?status='+status,{method:'PUT'});
+        sessionStorage.setItem('orderListNeedRefresh','1');
+        showToast('状态已更新','success');
+        loadDetail();
+    }catch(e){showToast(e.message||'操作失败','error');}
+}
+function goBackToList(){
+    sessionStorage.setItem('orderListNeedRefresh','1');
+    window.location.href='index.html';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>表管理 - 数据库管理</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .structure-modal .modal { width:700px; }
+        .structure-modal .modal-header { position:sticky; top:0; background:#fff; z-index:10; }
+        .structure-modal .modal-body { padding:0; overflow-y:auto; max-height:calc(90vh - 60px); }
+        .structure-modal .tab-nav { position:sticky; top:0; background:#fff; z-index:9; padding:16px 24px 0; }
+        .structure-modal .structure-toolbar { position:sticky; top:50px; background:#fff; z-index:8; padding:8px 24px; }
+        .structure-modal .structure-content-inner { padding:0 24px 24px; }
+        .structure-modal #columnsTable thead { position:sticky; top:100px; background:#fff; z-index:7; }
+        .structure-modal #columnsTable th { background:#fff; border-bottom:2px solid #e8e8e8; }
+        .tab-nav { display:flex; gap:0; border-bottom:2px solid #f0f0f0; margin-bottom:16px; }
+        .tab-nav button { padding:8px 20px; border:none; background:none; cursor:pointer; font-size:14px; color:#666; border-bottom:2px solid transparent; margin-bottom:-2px; }
+        .tab-nav button.active { color:var(--primary); border-bottom-color:var(--primary); font-weight:600; }
+        .ddl-box { background:#282c34 !important; color:#abb2bf !important; border:none; border-radius:8px; padding:20px; font-family:'Consolas','Monaco','Courier New',monospace; font-size:13px; line-height:1.7; white-space:pre; max-height:500px; overflow:auto; }
+        .ddl-box .kw { color:#c678dd; }
+        .ddl-box .type { color:#e5c07b; }
+        .ddl-box .str { color:#98c379; }
+        .ddl-box .num { color:#d19a66; }
+        .ddl-box .func { color:#56b6c2; }
+        .ddl-box .comment { color:#5c6370; font-style:italic; }
+        .ddl-wrap-toggle { display:inline-flex; align-items:center; gap:4px; font-size:12px; color:#666; cursor:pointer; margin-left:12px; }
+        .ddl-wrap-toggle input { cursor:pointer; }
+        .copy-btn { position:absolute; top:8px; right:8px; }
+        .col-table-name { width:200px; max-width:200px; }
+        .col-table-comment { width:220px; max-width:220px; }
+        .col-serial { width:56px; max-width:56px; text-align:center; }
+        .table-container td:first-child { width:56px; max-width:56px; text-align:center; color:#64748b; }
+        .cell-ellipsis { max-width:220px; }
+        .cell-ellipsis .ellipsis-text { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:default; }
+        .cell-ellipsis .ellipsis-text.is-copyable { cursor:pointer; }
+        .cell-ellipsis .ellipsis-text.is-copyable:hover { color:#3B82F6; }
+        .table-container table { table-layout:fixed; }
+        .table-container td.cell-ellipsis:nth-child(2) { max-width:200px; }
+        .table-container td.cell-ellipsis:nth-child(3) { max-width:220px; }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <div class="sidebar">
+        <div class="sidebar-header"><div class="logo"><i class="fas fa-database"></i></div><h2>数据库管理系统</h2></div>
+        <nav class="sidebar-nav">
+            <div class="nav-group-title">数据库管理</div>
+            <a class="nav-item" href="index.html"><i class="fas fa-server"></i> 实例管理</a>
+            <a class="nav-item" href="tables.html"><i class="fas fa-table"></i> 表管理</a>
+            <a class="nav-item" href="sql-query.html"><i class="fas fa-terminal"></i> SQL查询</a>
+        </nav>
+        <div class="sidebar-footer"><a href="../../index.html"><i class="fas fa-arrow-left"></i> 返回门户首页</a></div>
+    </div>
+    <div class="main-content">
+        <div class="main-header">
+            <h2 id="pageTitle">表管理</h2>
+            <div class="user-dropdown"><div class="user-dropdown-trigger"><div style="width:32px;height:32px;border-radius:50%;background:#8B5CF6;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;"><i class="fas fa-user"></i></div><span class="user-name" style="font-size:14px;"></span></div>
+                <div class="user-dropdown-menu"><a href="../../profile.html"><i class="fas fa-id-card"></i> 个人信息</a><a href="javascript:void(0)" onclick="showChangePwdModal()"><i class="fas fa-key"></i> 修改密码</a><div class="divider"></div><a href="javascript:void(0)" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> 退出登录</a></div>
+            </div>
+        </div>
+        <div class="main-body">
+            <div class="stats-row">
+                <div class="stat-card"><div class="stat-icon" style="background:#3B82F6;"><i class="fas fa-table"></i></div><div class="stat-info"><h3 id="stat-tables">0</h3><p>表数量</p></div></div>
+                <div class="stat-card"><div class="stat-icon" style="background:#8B5CF6;"><i class="fas fa-hdd"></i></div><div class="stat-info"><h3 id="stat-size">-</h3><p>数据大小</p></div></div>
+                <div class="stat-card"><div class="stat-icon" style="background:#10B981;"><i class="fas fa-font"></i></div><div class="stat-info"><h3 id="stat-charset">-</h3><p>字符集</p></div></div>
+            </div>
+            <div class="toolbar">
+                <div class="toolbar-left">
+                    <label class="filter-label" for="instanceFilter">实例名称</label>
+                    <select class="filter-select" id="instanceFilter" onchange="onInstanceChange()">
+                        <option value="">加载中...</option>
+                    </select>
+                    <div class="search-box"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="搜索表名..." oninput="applyFilter()" autocomplete="nope"></div>
+                </div>
+                <div class="toolbar-right">
+                    <button class="btn btn-secondary" onclick="loadTables()"><i class="fas fa-sync-alt"></i> 刷新</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table><thead><tr><th class="col-serial">序号</th><th class="col-table-name">表名</th><th class="col-table-comment">中文注释</th><th>引擎</th><th>数据大小</th><th>创建时间</th><th>操作</th></tr></thead>
+                <tbody id="tableBody"></tbody></table>
+                <div class="pagination" id="pagination"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Structure Modal -->
+<div class="modal-overlay structure-modal" id="structureModal">
+    <div class="modal" style="width:700px;">
+        <div class="modal-header"><h3 id="structureTitle">表结构</h3><button class="modal-close" onclick="closeStructureModal()">&times;</button></div>
+        <div class="modal-body">
+            <div class="tab-nav">
+                <button class="active" onclick="switchStructureTab('columns')">字段信息</button>
+                <button onclick="switchStructureTab('ddl')">DDL</button>
+            </div>
+            <div id="structureContent"></div>
+        </div>
+    </div>
+</div>
+
+<script src="../../js/config.js"></script>
+<script>
+function highlightNav(){var page=window.location.pathname.split('/').pop();document.querySelectorAll('.nav-item').forEach(function(item){var href=item.getAttribute('href');if(href&&href.split('/').pop()===page)item.classList.add('active');else item.classList.remove('active');});}
+let instanceId, allInstances=[], allTables=[], filteredTables=[], tablePage=1, tablePageSize=10;
+let currentStructureTable='';
+
+document.addEventListener('DOMContentLoaded', function(){
+    if(!isLoggedIn()){window.location.href='../../login.html';return;}
+    initUserDropdown(); clearSearchInputs(); highlightNav();
+    initPage();
+});
+
+async function initPage(){
+    try{
+        allInstances = await request('/db/instances') || [];
+        if(!allInstances.length){
+            showToast('暂无数据库实例','warning');
+            document.getElementById('instanceFilter').innerHTML = '<option value="">暂无实例</option>';
+            return;
+        }
+        renderInstanceFilter();
+        var params = new URLSearchParams(window.location.search);
+        var urlId = params.get('id');
+        if(urlId && allInstances.some(function(inst){ return String(inst.id) === String(urlId); })){
+            instanceId = urlId;
+        } else {
+            instanceId = String(allInstances[0].id);
+            if(urlId) showToast('指定实例不存在，已切换到默认实例','warning');
+        }
+        syncInstanceSelection();
+        loadTables();
+    }catch(e){
+        showToast('加载实例列表失败','error');
+    }
+}
+
+function renderInstanceFilter(){
+    var sel = document.getElementById('instanceFilter');
+    sel.innerHTML = allInstances.map(function(inst){
+        var label = inst.instanceName || inst.dbName || '实例';
+        return '<option value="'+inst.id+'">'+label+'</option>';
+    }).join('');
+}
+
+function syncInstanceSelection(){
+    document.getElementById('instanceFilter').value = instanceId;
+    updatePageTitle();
+    var url = new URL(window.location.href);
+    url.searchParams.set('id', instanceId);
+    window.history.replaceState(null, '', url.pathname + url.search);
+}
+
+function updatePageTitle(){
+    var inst = allInstances.find(function(x){ return String(x.id) === String(instanceId); });
+    var name = inst ? (inst.instanceName || inst.dbName || '实例') : '表管理';
+    document.getElementById('pageTitle').textContent = '表管理 - ' + name;
+}
+
+function onInstanceChange(){
+    var selected = document.getElementById('instanceFilter').value;
+    if(!selected || selected === instanceId) return;
+    instanceId = selected;
+    document.getElementById('searchInput').value = '';
+    document.getElementById('searchInput').dispatchEvent(new Event('input', { bubbles: true }));
+    syncInstanceSelection();
+    loadTables();
+}
+
+async function loadTables(){
+    try{
+        var data=await request('/db/instances/'+instanceId+'/tables');
+        allTables=data||[];
+        document.getElementById('stat-tables').textContent=allTables.length;
+        // Try to get real stats
+        try{
+            var stats=await request('/db/instances/'+instanceId+'/realstats');
+            if(stats){
+                document.getElementById('stat-size').textContent=stats.totalSize||'-';
+                document.getElementById('stat-charset').textContent=stats.charset||'-';
+            }
+        }catch(e){}
+        applyFilter();
+    }catch(e){showToast('加载表列表失败','error');}
+}
+
+function applyFilter(){
+    var keyword=document.getElementById('searchInput').value.trim().toLowerCase();
+    filteredTables=allTables.filter(function(t){
+        if(!keyword) return true;
+        return (t.tableName||'').toLowerCase().includes(keyword) ||
+            (t.comment||'').toLowerCase().includes(keyword);
+    });
+    tablePage=1; renderTable();
+}
+
+function escapeHtml(str){
+    return String(str == null ? '' : str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escapeAttr(str){
+    return escapeHtml(str).replace(/'/g,'&#39;');
+}
+function renderEllipsisCell(text){
+    var value = text == null ? '' : String(text).trim();
+    if(!value){
+        return '<td class="cell-ellipsis"><span class="ellipsis-text">-</span></td>';
+    }
+    return '<td class="cell-ellipsis"><span class="ellipsis-text is-copyable" title="'+escapeAttr(value)+'" data-copy-text="'+escapeAttr(value)+'" ondblclick="copyTableCell(this)">'+escapeHtml(value)+'</span></td>';
+}
+function copyTableCell(el){
+    var text = el.getAttribute('data-copy-text');
+    if(!text) return;
+    if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(function(){ showToast('已复制','success'); }).catch(function(){ fallbackCopy(text); });
+    }else{
+        fallbackCopy(text);
+    }
+}
+function fallbackCopy(text){
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try{
+        document.execCommand('copy');
+        showToast('已复制','success');
+    }catch(e){
+        showToast('复制失败','error');
+    }
+    document.body.removeChild(ta);
+}
+
+function renderTable(){
+    var start=(tablePage-1)*tablePageSize, pageData=filteredTables.slice(start,start+tablePageSize);
+    var tbody=document.getElementById('tableBody');
+    if(!pageData.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;color:#999;">暂无数据</td></tr>';}
+    else{
+        tbody.innerHTML=pageData.map(function(t,i){
+            var tableName = t.tableName || '';
+            return '<tr><td>'+(start+i+1)+'</td>'+
+                renderEllipsisCell(tableName)+
+                renderEllipsisCell(t.comment)+
+                '<td>'+escapeHtml(t.engine||'-')+'</td>'+
+                '<td>'+escapeHtml(t.dataLength||'-')+'</td>'+
+                '<td>'+escapeHtml(t.createTime||'-')+'</td>'+
+                '<td><button class="btn btn-sm btn-primary" onclick=\'viewStructure(' + JSON.stringify(tableName) + ')\'><i class="fas fa-eye"></i> 结构</button></td></tr>';
+        }).join('');
+    }
+    renderPagination();
+}
+
+function renderPagination(){
+    var total=filteredTables.length, totalPages=Math.ceil(total/tablePageSize)||1;
+    var html='<div class="pagination-info">共 '+total+' 张表 | 每页 <select class="page-size-select" onchange="changePageSize(this.value)">'+
+        [5,10,20,50,100].map(function(s){return '<option value="'+s+'"'+(s===tablePageSize?' selected':'')+'>'+s+'</option>';}).join('')+'</select></div>';
+    html+='<div class="pagination-btns"><button '+(tablePage<=1?'disabled':'')+' onclick="goPage('+(tablePage-1)+')">‹</button>';
+    for(var p=1;p<=totalPages;p++){
+        if(totalPages>7&&Math.abs(p-tablePage)>2&&p!==1&&p!==totalPages){if(p===2||p===totalPages-1)html+='<button disabled>...</button>';continue;}
+        html+='<button class="'+(p===tablePage?'active':'')+'" onclick="goPage('+p+')">'+p+'</button>';
+    }
+    html+='<button '+(tablePage>=totalPages?'disabled':'')+' onclick="goPage('+(tablePage+1)+')">›</button></div>';
+    document.getElementById('pagination').innerHTML=html;
+}
+function goPage(p){tablePage=p;renderTable();}
+function changePageSize(v){tablePageSize=parseInt(v);tablePage=1;renderTable();}
+
+async function viewStructure(tableName){
+    currentStructureTable=tableName;
+    document.getElementById('structureTitle').textContent=tableName+' - 表结构';
+    document.getElementById('structureModal').style.display='flex';
+    // Reset tabs
+    document.querySelectorAll('.tab-nav button').forEach(function(b,i){b.classList.toggle('active',i===0);});
+    await loadColumns(tableName);
+}
+function closeStructureModal(){document.getElementById('structureModal').style.display='none';}
+
+async function switchStructureTab(tab){
+    document.querySelectorAll('.tab-nav button').forEach(function(b,i){b.classList.toggle('active',(tab==='columns'&&i===0)||(tab==='ddl'&&i===1));});
+    if(tab==='columns') await loadColumns(currentStructureTable);
+    else await loadDDL(currentStructureTable);
+}
+
+async function loadColumns(tableName){
+    try{
+        var cols=await request('/db/instances/'+instanceId+'/tables/'+tableName+'/structure');
+        if(!cols||!cols.length){document.getElementById('structureContent').innerHTML='<p style="color:#999;">无字段信息</p>';return;}
+        var html='<div class="structure-toolbar" style="display:flex;justify-content:flex-end;"><button class="btn btn-sm btn-primary" onclick="copyColumns()"><i class="fas fa-copy"></i> 复制</button></div>';
+        html+='<div class="structure-content-inner"><table id="columnsTable" style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr><th>字段</th><th>类型</th><th>可空</th><th>键</th><th>默认值</th><th>备注</th></tr></thead><tbody>';
+        cols.forEach(function(c){
+            html+='<tr><td>'+c.field+'</td><td>'+c.type+'</td><td>'+(c.nullable||'')+'</td><td>'+(c.key||'')+'</td><td>'+(c.defaultValue||'-')+'</td><td>'+(c.comment||'')+'</td></tr>';
+        });
+        html+='</tbody></table></div>';
+        document.getElementById('structureContent').innerHTML=html;
+    }catch(e){document.getElementById('structureContent').innerHTML='<p style="color:#ff4d4f;">加载失败</p>';}
+}
+
+function copyColumns(){
+    var table=document.getElementById('columnsTable');
+    if(!table){showToast('无数据可复制','warning');return;}
+    var rows=table.querySelectorAll('tr');
+    var text=[];
+    rows.forEach(function(row){
+        var cells=row.querySelectorAll('th,td');
+        var line=[];
+        cells.forEach(function(cell){line.push(cell.textContent.trim());});
+        text.push(line.join('\t'));
+    });
+    navigator.clipboard.writeText(text.join('\n')).then(function(){
+        showToast('已复制，可直接粘贴到Excel','success');
+    }).catch(function(){showToast('复制失败','error');});
+}
+
+async function loadDDL(tableName){
+    try{
+        var data=await request('/db/instances/'+instanceId+'/tables/'+tableName+'/ddl');
+        var ddl=(typeof data==='string'?data:(data&&data.ddl))||'无法获取DDL';
+        var highlighted = highlightSQL(ddl);
+        document.getElementById('structureContent').innerHTML=
+            '<div style="position:relative;">'+
+            '<div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:8px;">'+
+            '<label class="ddl-wrap-toggle"><input type="checkbox" onchange="toggleDDLWrap(this.checked)"> 自动换行</label>'+
+            '<button class="btn btn-sm btn-primary" onclick="copyDDL()" style="margin-left:12px;"><i class="fas fa-copy"></i> 复制</button>'+
+            '</div>'+
+            '<div class="ddl-box" id="ddlContent">'+highlighted+'</div></div>';
+    }catch(e){document.getElementById('structureContent').innerHTML='<p style="color:#ff4d4f;">加载DDL失败</p>';}
+}
+
+function highlightSQL(sql){
+    // 转义HTML
+    var s = sql.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    // SQL关键字（紫色）
+    var keywords = 'CREATE|TABLE|DROP|IF|EXISTS|NOT|NULL|DEFAULT|AUTO_INCREMENT|COMMENT|PRIMARY|KEY|UNIQUE|INDEX|ENGINE|CHARSET|COLLATE|ON|UPDATE|SET|INSERT|INTO|VALUES|SELECT|FROM|WHERE|AND|OR|ALTER|ADD|COLUMN|INT|BIGINT|VARCHAR|DATETIME|TIMESTAMP|TINYINT|TEXT|DECIMAL|DOUBLE|FLOAT|CHAR|BLOB|ENUM|UNSIGNED|CURRENT_TIMESTAMP';
+    s = s.replace(new RegExp('\\b('+keywords+')\\b','gi'), function(m){ return '<span class="kw">'+m+'</span>'; });
+    // 字符串（绿色）- 单引号包裹
+    s = s.replace(/'([^']*)'/g, '\'<span class="str">$1</span>\'');
+    // 数字（橙色）
+    s = s.replace(/\b(\d+)\b/g, '<span class="num">$1</span>');
+    // 反引号包裹的标识符保持原色
+    return s;
+}
+
+function toggleDDLWrap(wrap){
+    var box = document.getElementById('ddlContent');
+    if(wrap){ box.style.whiteSpace='pre-wrap'; box.style.wordBreak='break-all'; }
+    else { box.style.whiteSpace='pre'; box.style.wordBreak='normal'; }
+}
+
+function copyDDL(){
+    var text=document.getElementById('ddlContent').textContent;
+    navigator.clipboard.writeText(text).then(function(){showToast('DDL已复制','success');}).catch(function(){showToast('复制失败','error');});
+}
+    </script>
+</body>
+</html>

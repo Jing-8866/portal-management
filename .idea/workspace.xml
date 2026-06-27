@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="d8d611f3-fed3-4930-b308-88c879fbb894" name="Changes" comment="new project">
+      <change afterPath="$PROJECT_DIR$/backend/portal-main/config/secrets-example.properties" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/portal-main/config/secrets-prod.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-common/pom.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-common/src/main/java/com/portal/common/annotation/OperationLog.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-common/src/main/java/com/portal/common/aspect/OperationLogAspect.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-common/src/main/java/com/portal/common/config/CorsConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-common/src/main/java/com/portal/common/config/MyBatisPlusConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-common/src/main/java/com/portal/common/config/SecurityConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-common/src/main/java/com/portal/common/dto/ApiResult.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-common/src/main/java/com/portal/common/dto/LoginRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-common/src/main/java/com/portal/common/dto/LoginResponse.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-common/src/main/java/com/portal/common/dto/PermissionRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-common/src/main/java/com/portal/common/dto/UserCreateRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-common/src/main/java/com/portal/common/model/SysOperationLog.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-common/src/main/java/com/portal/common/model/SysRole.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-common/src/main/java/com/portal/common/model/SysRoleSubsystem.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-common/src/main/java/com/portal/common/model/SysSubsystem.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-common/src/main/java/com/portal/common/model/SysUser.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-common/src/main/java/com/portal/common/model/SysUserRole.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-common/src/main/java/com/portal/common/model/SysUserSubsystem.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-common/src/main/java/com/portal/common/security/JwtAuthenticationFilter.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-common/src/main/java/com/portal/common/service/LogWriter.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-common/src/main/java/com/portal/common/util/GenPassword.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-common/src/main/java/com/portal/common/util/JwtUtil.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-dbmgmt/pom.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-dbmgmt/src/main/java/com/portal/dbmgmt/controller/DbInstanceController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-dbmgmt/src/main/java/com/portal/dbmgmt/mapper/BizDbInstanceMapper.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-dbmgmt/src/main/java/com/portal/dbmgmt/model/BizDbInstance.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-dbmgmt/src/main/java/com/portal/dbmgmt/service/DbInstanceService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-log/pom.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-log/src/main/java/com/portal/log/controller/LogController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-log/src/main/java/com/portal/log/mapper/SysOperationLogMapper.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-log/src/main/java/com/portal/log/service/LogService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-log/src/main/java/com/portal/log/service/LogWriterImpl.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/pom.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/PortalApplication.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/config/DbmgmtDataSourceConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/config/LogDataSourceConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/config/MainDataSourceConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/config/OrderDataSourceConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/config/PasswordInitializer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/controller/AuthController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/controller/PermissionController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/controller/RoleController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/controller/RolePermissionController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/controller/SubsystemController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/controller/UserController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/dto/ChangePasswordRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/dto/ImportResult.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/dto/ProfileUpdateRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/dto/UserDetailVO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/dto/UserUpdateRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/mapper/SysRoleMapper.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/mapper/SysRoleSubsystemMapper.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/mapper/SysSubsystemMapper.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/mapper/SysUserMapper.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/mapper/SysUserRoleMapper.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/mapper/SysUserSubsystemMapper.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/service/AuthService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/service/PermissionService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/service/SubsystemService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/service/UserExcelService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/java/com/portal/main/service/UserService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/resources/DDL.sql" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/resources/application-dev.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/resources/application-prod.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-main/src/main/resources/application.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-order/pom.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-order/src/main/java/com/portal/order/controller/OrderController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-order/src/main/java/com/portal/order/mapper/BizOrderMapper.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-order/src/main/java/com/portal/order/model/BizOrder.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/portal-order/src/main/java/com/portal/order/service/OrderService.java" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="PATH_TO_GIT" value="C:\SelfSoftware\Git\bin\git.exe" />
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="dev" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 6,
+  &quot;fromUser&quot;: false
+}</component>
+  <component name="ProjectId" id="3Fa2ReBkVFB7Qe5H6C9E83jlCKk" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.GenPassword.executor": "Run",
+    "Application.PortalApplication.executor": "Run",
+    "Application.com.portal.common.util.GenPassword.executor": "Run",
+    "Maven.portal-management [compile].executor": "Run",
+    "Maven.portal-parent [clean].executor": "Run",
+    "Maven.portal-parent [compile].executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Notification.DisplayName-DoNotAsk-Lombok plugin": "Lombok integration problem",
+    "Notification.DoNotAsk-Lombok plugin": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "Spring Boot.PortalApplication.executor": "Run",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Self/Personally/Study/AI/JAVA/portal-management/backend/portal-main/config",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.2",
+    "settings.editor.selected.configurable": "vcs.Git"
+  },
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "mysql"
+    ]
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Self\Personally\Study\AI\JAVA\portal-management\backend\portal-main\config" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Self\Personally\Study\AI\JAVA\portal-management\backend" />
+      <recent name="C:\Self\Personally\Study\AI\JAVA\backend\portal-management" />
+      <recent name="C:\Self\Personally\Study\AI\JAVA\backend\portal-common\src\main\java\com\portal\common\util" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-37e91769500f-intellij.indexing.shared.core-IU-261.24374.151" />
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-IU-261.24374.151" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="d8d611f3-fed3-4930-b308-88c879fbb894" name="Changes" comment="" />
+      <created>1782298852939</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1782298852939</updated>
+    </task>
+    <task id="LOCAL-00001" summary="new project">
+      <option name="closed" value="true" />
+      <created>1782464124183</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1782464124184</updated>
+    </task>
+    <task id="LOCAL-00002" summary="new project">
+      <option name="closed" value="true" />
+      <created>1782464682678</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1782464682678</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="RECENT_FILTERS">
+      <map>
+        <entry key="Branch">
+          <value>
+            <list>
+              <RecentGroup>
+                <option name="FILTER_VALUES">
+                  <option value="dev" />
+                </option>
+              </RecentGroup>
+              <RecentGroup>
+                <option name="FILTER_VALUES">
+                  <option value="main" />
+                </option>
+              </RecentGroup>
+            </list>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="dev" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="new project" />
+    <MESSAGE value="delete" />
+    <option name="LAST_COMMIT_MESSAGE" value="delete" />
+  </component>
+</project>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户角色分配 - 系统门户管理平台</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .assign-container { display: grid; grid-template-columns: 300px 1fr; gap: 24px; }
+        .role-list-panel { background: #fff; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .role-list-panel h3 { font-size: 15px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
+        .role-item { padding: 10px 12px; border-radius: 6px; cursor: pointer; margin-bottom: 4px; font-size: 14px; transition: all 0.2s; }
+        .role-item:hover { background: #f0f7ff; }
+        .role-item.selected { background: #3B82F6; color: #fff; }
+        .user-assign-panel { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .user-assign-panel h3 { font-size: 15px; margin-bottom: 16px; }
+        .user-check-list { max-height: 500px; overflow-y: auto; }
+        .user-check-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 4px; }
+        .user-check-item:hover { background: #f8fafc; }
+        .user-check-item label { font-size: 14px; cursor: pointer; }
+        .user-check-item.assigned { background: #f0f7ff; }
+        .user-check-item.assigned label { color: #3B82F6; font-weight: 500; }
+        .filter-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+        .filter-tab { padding: 5px 12px; border-radius: 14px; font-size: 13px; cursor: pointer; border: 1px solid #e0e0e0; background: #fff; transition: all 0.2s; }
+        .filter-tab:hover { border-color: #3B82F6; color: #3B82F6; }
+        .filter-tab.active { background: #3B82F6; color: #fff; border-color: #3B82F6; }
+        .assign-stats { font-size: 13px; color: #666; margin-left: 12px; }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <div class="sidebar">
+        <div class="sidebar-header"><div class="logo"><i class="fas fa-users-cog"></i></div><h2>用户管理系统</h2></div>
+        <nav class="sidebar-nav">
+            <div class="nav-group-title">用户管理</div>
+            <a class="nav-item" href="index.html"><i class="fas fa-users"></i> 用户管理</a>
+            <a class="nav-item" href="users-no-perm.html"><i class="fas fa-user-slash"></i> 查看无权限用户</a>
+            <div class="nav-group-title">角色管理</div>
+            <a class="nav-item" href="roles.html"><i class="fas fa-user-shield"></i> 角色管理</a>
+            <a class="nav-item" href="role-assign.html"><i class="fas fa-user-plus"></i> 用户角色分配</a>
+            <a class="nav-item" href="user-roles.html"><i class="fas fa-search"></i> 查询用户角色</a>
+            <div class="nav-group-title">权限管理</div>
+            <a class="nav-item" href="perm-menu.html"><i class="fas fa-key"></i> 子系统权限分配</a>
+            <a class="nav-item" href="perm-view.html"><i class="fas fa-eye"></i> 系统权限查看</a>
+            <a class="nav-item" href="perm-data.html"><i class="fas fa-database"></i> 数据权限管理</a>
+        </nav>
+        <div class="sidebar-footer"><a href="../../index.html"><i class="fas fa-arrow-left"></i> 返回门户首页</a></div>
+    </div>
+    <div class="main-content">
+        <div class="main-header"><h2>用户角色分配</h2>
+            <div class="user-dropdown"><div class="user-dropdown-trigger"><div class="user-avatar" style="width:32px;height:32px;font-size:12px;background:#3B82F6;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;"><i class="fas fa-user"></i></div><span class="user-name" style="font-size:14px;"></span></div>
+                <div class="user-dropdown-menu"><a href="../../profile.html"><i class="fas fa-id-card"></i> 个人信息</a><a href="javascript:void(0)" onclick="showChangePwdModal()"><i class="fas fa-key"></i> 修改密码</a><div class="divider"></div><a href="javascript:void(0)" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> 退出登录</a></div></div></div>
+        <div class="main-body">
+            <div class="assign-container">
+                <div class="role-list-panel">
+                    <h3><i class="fas fa-user-shield"></i> 选择角色</h3>
+                    <div id="roleList">加载中...</div>
+                </div>
+                <div class="user-assign-panel">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                        <h3 id="assignTitle"><i class="fas fa-users"></i> 请先选择一个角色</h3>
+                        <button class="btn btn-primary" id="saveBtn" style="display:none;" onclick="saveAssign()"><i class="fas fa-save"></i> 保存分配</button>
+                    </div>
+                    <div class="filter-tabs" id="filterTabs" style="display:none;">
+                        <span class="filter-tab active" onclick="filterUsers('all')">全部</span>
+                        <span class="filter-tab" onclick="filterUsers('assigned')">已分配</span>
+                        <span class="filter-tab" onclick="filterUsers('unassigned')">未分配</span>
+                        <span class="assign-stats" id="assignStats"></span>
+                    </div>
+                    <div id="searchRow" style="display:none;margin-bottom:12px;">
+                        <input type="text" id="userSearchInput" placeholder="搜索用户名/姓名..." oninput="renderUserCheckList()" style="padding:6px 12px;border:1px solid #e0e0e0;border-radius:6px;font-size:13px;width:240px;outline:none;" autocomplete="nope">
+                    </div>
+                    <div class="user-check-list" id="userCheckList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../../js/config.js"></script>
+<script>
+let allRoles=[], allUsers=[], selectedRoleId=null, assignedUserIds=[];
+let currentFilter='all', checkedMap={};
+document.addEventListener('DOMContentLoaded', function() {
+    if(!isLoggedIn()){window.location.href='../../login.html';return;}
+    initUserDropdown(); highlightNav(); loadData();
+});
+function highlightNav(){var page=window.location.pathname.split('/').pop();document.querySelectorAll('.nav-item').forEach(function(item){var href=item.getAttribute('href');if(href&&href.split('/').pop()===page)item.classList.add('active');else item.classList.remove('active');});}
+async function loadData(){
+    try {
+        allRoles = (await request('/roles'))||[];
+        allRoles = allRoles.filter(function(r){return r.status===1;});
+        allUsers = ((await request('/users/all'))||[]).filter(function(u){return u.status===1;});
+        renderRoleList();
+    } catch(e){showToast('加载数据失败','error');}
+}
+function renderRoleList(){
+    document.getElementById('roleList').innerHTML = allRoles.map(function(r){
+        return '<div class="role-item" data-id="'+r.id+'" onclick="selectRole('+r.id+')">'+r.roleName+'</div>';
+    }).join('') || '<p style="color:#999;font-size:14px;">暂无启用角色</p>';
+}
+async function selectRole(id){
+    selectedRoleId=id;
+    document.querySelectorAll('.role-item').forEach(function(el){el.classList.toggle('selected',el.dataset.id==id);});
+    var role=allRoles.find(function(r){return r.id===id;});
+    document.getElementById('assignTitle').innerHTML='<i class="fas fa-users"></i> '+role.roleName+' - 用户分配';
+    if(isAdmin()) document.getElementById('saveBtn').style.display='inline-flex';
+    try {
+        var assigned = (await request('/roles/'+id+'/users'))||[];
+        // 后端直接返回 userId 数组 [1, 2, 3]
+        assignedUserIds = assigned;
+        // 初始化 checkedMap：只标记在 allUsers 中存在的用户
+        checkedMap = {};
+        allUsers.forEach(function(u){ checkedMap[u.id] = assignedUserIds.includes(u.id); });
+        document.getElementById('filterTabs').style.display='flex';
+        document.getElementById('searchRow').style.display='block';
+        currentFilter='all';
+        updateFilterTabs();
+        renderUserCheckList();
+    } catch(e){showToast('加载角色用户失败','error');}
+}
+function updateFilterTabs(){
+    document.querySelectorAll('.filter-tab').forEach(function(t){t.classList.remove('active');});
+    document.querySelectorAll('.filter-tab').forEach(function(t){
+        if((t.textContent==='全部'&&currentFilter==='all')||(t.textContent==='已分配'&&currentFilter==='assigned')||(t.textContent==='未分配'&&currentFilter==='unassigned'))
+            t.classList.add('active');
+    });
+    // 只更新tab高亮，统计由renderUserCheckList触发
+}
+function filterUsers(type){
+    currentFilter=type;
+    updateFilterTabs();
+    renderUserCheckList();
+}
+function renderUserCheckList(){
+    // 搜索过滤
+    var keyword = (document.getElementById('userSearchInput')||{}).value;
+    keyword = keyword ? keyword.trim().toLowerCase() : '';
+    var filtered = allUsers.filter(function(u){
+        if(currentFilter==='assigned') return checkedMap[u.id];
+        if(currentFilter==='unassigned') return !checkedMap[u.id];
+        return true;
+    }).filter(function(u){
+        if(!keyword) return true;
+        return (u.username||'').toLowerCase().includes(keyword) || (u.realName||'').toLowerCase().includes(keyword);
+    });
+    document.getElementById('userCheckList').innerHTML = filtered.map(function(u){
+        var checked = checkedMap[u.id]?'checked':'';
+        var cls = checkedMap[u.id]?'user-check-item assigned':'user-check-item';
+        var disabled=isAdmin()?'':' disabled';
+        return '<div class="'+cls+'"><input type="checkbox" id="uc-'+u.id+'" value="'+u.id+'" '+checked+disabled+' onchange="updateAssignStats()"><label for="uc-'+u.id+'">'+u.username+(u.realName?' ('+u.realName+')':'')+'</label></div>';
+    }).join('') || '<p style="color:#999;text-align:center;padding:20px;">无匹配用户</p>';
+    updateAssignStats();
+}
+function updateAssignStats(){
+    // 同步当前可见checkbox状态到checkedMap（仅在列表已渲染后调用）
+    document.querySelectorAll('#userCheckList input[type="checkbox"]').forEach(function(cb){
+        checkedMap[parseInt(cb.value)] = cb.checked;
+    });
+    var total = allUsers.length;
+    var checkedCount = allUsers.filter(function(u){ return checkedMap[u.id]; }).length;
+    document.getElementById('assignStats').textContent='已选 '+checkedCount+' / 共 '+total+' 人';
+}
+async function saveAssign(){
+    if(!selectedRoleId){showToast('请先选择角色','warning');return;}
+    // 从 checkedMap 收集所有选中的用户ID
+    var userIds = allUsers.filter(function(u){ return checkedMap[u.id]; }).map(function(u){ return u.id; });
+    try{
+        await request('/roles/'+selectedRoleId+'/users',{method:'POST',body:JSON.stringify(userIds)});
+        showToast('分配保存成功','success');
+        assignedUserIds = userIds;
+    }catch(e){showToast(e.message||'保存失败','error');}
+}
+</script>
+</body>
+</html>

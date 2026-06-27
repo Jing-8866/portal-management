@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>订单管理 - 系统门户管理平台</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="layout">
+    <div class="sidebar">
+        <div class="sidebar-header"><div class="logo"><i class="fas fa-cart-shopping"></i></div><h2>订单管理系统</h2></div>
+        <nav class="sidebar-nav">
+            <div class="nav-group-title">订单管理</div>
+            <a class="nav-item" href="index.html"><i class="fas fa-list-alt"></i> 订单列表</a>
+            <a class="nav-item" href="order-create.html"><i class="fas fa-plus-circle"></i> 新建订单</a>
+            <div class="nav-group-title">数据分析</div>
+            <a class="nav-item" href="order-stats.html"><i class="fas fa-chart-bar"></i> 订单统计</a>
+        </nav>
+        <div class="sidebar-footer"><a href="../../index.html"><i class="fas fa-arrow-left"></i> 返回门户首页</a></div>
+    </div>
+    <div class="main-content">
+        <div class="main-header">
+            <h2>订单管理</h2>
+            <div class="user-dropdown"><div class="user-dropdown-trigger"><div style="width:32px;height:32px;border-radius:50%;background:#F59E0B;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;"><i class="fas fa-user"></i></div><span class="user-name" style="font-size:14px;"></span></div>
+                <div class="user-dropdown-menu"><a href="../../profile.html"><i class="fas fa-id-card"></i> 个人信息</a><a href="javascript:void(0)" onclick="showChangePwdModal()"><i class="fas fa-key"></i> 修改密码</a><div class="divider"></div><a href="javascript:void(0)" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> 退出登录</a></div>
+            </div>
+        </div>
+        <div class="main-body">
+            <div class="stats-row">
+                <div class="stat-card"><div class="stat-icon" style="background:#3B82F6;"><i class="fas fa-file-lines"></i></div><div class="stat-info"><h3 id="stat-total">0</h3><p>订单总数</p></div></div>
+                <div class="stat-card"><div class="stat-icon" style="background:#F59E0B;"><i class="fas fa-clock"></i></div><div class="stat-info"><h3 id="stat-pending">0</h3><p>待处理</p></div></div>
+                <div class="stat-card"><div class="stat-icon" style="background:#10B981;"><i class="fas fa-check-circle"></i></div><div class="stat-info"><h3 id="stat-completed">0</h3><p>已完成</p></div></div>
+                <div class="stat-card"><div class="stat-icon" style="background:#EF4444;"><i class="fas fa-times-circle"></i></div><div class="stat-info"><h3 id="stat-cancelled">0</h3><p>已取消</p></div></div>
+            </div>
+            <div class="toolbar">
+                <div class="toolbar-left">
+                    <div class="search-box"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="搜索订单号/客户..." oninput="applyFilter()" autocomplete="nope"></div>
+                    <select class="filter-select" id="statusFilter" onchange="applyFilter()"><option value="">全部状态</option><option value="pending">待处理</option><option value="processing">处理中</option><option value="completed">已完成</option><option value="cancelled">已取消</option></select>
+                </div>
+            </div>
+            <div class="table-container">
+                <table><thead><tr><th>序号</th><th>订单号</th><th>客户名称</th><th>金额</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead>
+                <tbody id="orderTableBody"></tbody></table>
+                <div class="pagination" id="pagination"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../../js/config.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
