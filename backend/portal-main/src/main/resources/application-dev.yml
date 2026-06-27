@@ -1,0 +1,5 @@
+# 开发环境配置
+# 敏感信息从外部文件加载
+spring:
+  config:
+    import: optional:file:./config/secrets-dev.properties

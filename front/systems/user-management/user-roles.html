@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>查询用户角色 - 系统门户管理平台</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .query-panel { background:#fff; border-radius:8px; padding:24px; box-shadow:0 1px 3px rgba(0,0,0,0.05); }
+        .query-row { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+        .result-area { margin-top:20px; }
+        .role-card { display:inline-flex; align-items:center; gap:8px; padding:8px 16px; background:#e6f7ff; border-radius:6px; margin:4px; font-size:14px; color:#1890ff; }
+        .searchable-select { position:relative; width:320px; }
+        .searchable-select input { width:100%; padding:8px 12px; border:1px solid #e0e0e0; border-radius:6px; font-size:14px; outline:none; box-sizing:border-box; }
+        .searchable-select input:focus { border-color:#3B82F6; }
+        .searchable-select .dropdown-list { position:absolute; top:100%; left:0; right:0; background:#fff; border:1px solid #e0e0e0; border-top:none; border-radius:0 0 6px 6px; max-height:240px; overflow-y:auto; z-index:100; display:none; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+        .searchable-select.open .dropdown-list { display:block; }
+        .searchable-select.open input { border-radius:6px 6px 0 0; }
+        .dropdown-item { padding:8px 12px; font-size:14px; cursor:pointer; transition:background 0.15s; }
+        .dropdown-item:hover { background:#f0f7ff; }
+        .dropdown-item.selected { background:#EBF5FF; color:#3B82F6; font-weight:500; }
+        .dropdown-item.no-match { color:#999; cursor:default; padding:16px 12px; text-align:center; }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <div class="sidebar"><div class="sidebar-header"><div class="logo"><i class="fas fa-users-cog"></i></div><h2>用户管理系统</h2></div><nav class="sidebar-nav"><div class="nav-group-title">用户管理</div><a class="nav-item" href="index.html"><i class="fas fa-users"></i> 用户管理</a><a class="nav-item" href="users-no-perm.html"><i class="fas fa-user-slash"></i> 查看无权限用户</a><div class="nav-group-title">角色管理</div><a class="nav-item" href="roles.html"><i class="fas fa-user-shield"></i> 角色管理</a><a class="nav-item" href="role-assign.html"><i class="fas fa-user-plus"></i> 用户角色分配</a><a class="nav-item" href="user-roles.html"><i class="fas fa-search"></i> 查询用户角色</a><div class="nav-group-title">权限管理</div><a class="nav-item" href="perm-menu.html"><i class="fas fa-key"></i> 子系统权限分配</a><a class="nav-item" href="perm-view.html"><i class="fas fa-eye"></i> 系统权限查看</a><a class="nav-item" href="perm-data.html"><i class="fas fa-database"></i> 数据权限管理</a></nav><div class="sidebar-footer"><a href="../../index.html"><i class="fas fa-arrow-left"></i> 返回门户首页</a></div></div>
+    <div class="main-content">
+        <div class="main-header"><h2>查询用户角色</h2><div class="user-dropdown"><div class="user-dropdown-trigger"><div class="user-avatar" style="width:32px;height:32px;font-size:12px;background:#3B82F6;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;"><i class="fas fa-user"></i></div><span class="user-name" style="font-size:14px;"></span></div><div class="user-dropdown-menu"><a href="../../profile.html"><i class="fas fa-id-card"></i> 个人信息</a><a href="javascript:void(0)" onclick="showChangePwdModal()"><i class="fas fa-key"></i> 修改密码</a><div class="divider"></div><a href="javascript:void(0)" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> 退出登录</a></div></div></div>
+        <div class="main-body">
+            <div class="query-panel">
+                <div class="query-row">
+                    <div class="searchable-select" id="userSelectWrap">
+                        <input type="text" id="userSearchInput" placeholder="搜索用户名/姓名..." onfocus="openDropdown()" oninput="filterDropdown()" autocomplete="nope">
+                        <div class="dropdown-list" id="userDropdownList"></div>
+                    </div>
+                </div>
+                <div class="result-area" id="resultArea">
+                    <p style="color:#999;font-size:14px;">请选择一个用户查看其角色</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../../js/config.js"></script>
+<script>
+var allRoles=[];
+var allUserList=[], selectedUserId=null;
+document.addEventListener('DOMContentLoaded', function(){
+    if(!isLoggedIn()){window.location.href='../../login.html';return;}
+    initUserDropdown(); highlightNav(); loadUsers();
+    // 点击外部关闭下拉
+    document.addEventListener('click', function(e){ if(!document.getElementById('userSelectWrap').contains(e.target)) closeDropdown(); });
+});
+function highlightNav(){var page=window.location.pathname.split('/').pop();document.querySelectorAll('.nav-item').forEach(function(item){var href=item.getAttribute('href');if(href&&href.split('/').pop()===page)item.classList.add('active');else item.classList.remove('active');});}
+async function loadUsers(){
+    try{
+        allRoles = await request('/roles') || [];
+        allUserList = (await request('/users/all') || []).filter(function(u){return u.status===1;});
+        renderDropdown(allUserList);
+    }catch(e){showToast('加载用户失败','error');}
+}
+function openDropdown(){ document.getElementById('userSelectWrap').classList.add('open'); filterDropdown(); }
+function closeDropdown(){ document.getElementById('userSelectWrap').classList.remove('open'); }
+function filterDropdown(){
+    var keyword=(document.getElementById('userSearchInput').value||'').trim().toLowerCase();
+    var filtered=allUserList.filter(function(u){
+        return !keyword || (u.username||'').toLowerCase().includes(keyword) || (u.realName||'').toLowerCase().includes(keyword);
+    });
+    renderDropdown(filtered);
+}
+function renderDropdown(users){
+    var list=document.getElementById('userDropdownList');
+    if(!users.length){ list.innerHTML='<div class="dropdown-item no-match">无匹配用户</div>'; return; }
+    list.innerHTML=users.map(function(u){
+        var cls=u.id===selectedUserId?'dropdown-item selected':'dropdown-item';
+        return '<div class="'+cls+'" onclick="selectUser('+u.id+',\''+u.username+(u.realName?' ('+u.realName+')':'')+'\')">'+u.username+(u.realName?' ('+u.realName+')':'')+'</div>';
+    }).join('');
+}
+function selectUser(id, name){
+    selectedUserId=id;
+    document.getElementById('userSearchInput').value=name;
+    syncSearchClearButtons('userSearchInput');
+    closeDropdown();
+    queryUserRoles();
+}
+async function queryUserRoles(){
+    var uid=selectedUserId;
+    if(!uid){document.getElementById('resultArea').innerHTML='<p style="color:#999;font-size:14px;">请选择一个用户</p>';return;}
+    try{
+        var roleIds = await request('/users/'+uid+'/roles') || [];
+        if(roleIds.length===0){
+            document.getElementById('resultArea').innerHTML='<p style="color:#999;font-size:14px;">该用户暂无角色</p>';
+        } else {
+            var roles = roleIds.map(function(rid){
+                var r = allRoles.find(function(role){return role.id===rid;});
+                return r || {roleName:'未知角色(ID:'+rid+')'};
+            });
+            document.getElementById('resultArea').innerHTML='<h4 style="margin-bottom:12px;font-size:14px;">角色列表：</h4>'+
+                roles.map(function(r){return '<span class="role-card"><i class="fas fa-tag"></i>'+r.roleName+'</span>';}).join('');
+        }
+    }catch(e){showToast('查询失败','error');}
+}
+</script>
+</body>
+</html>

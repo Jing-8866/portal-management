@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL查询 - 数据库管理</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="layout">
+    <div class="sidebar">
+        <div class="sidebar-header"><div class="logo"><i class="fas fa-database"></i></div><h2>数据库管理系统</h2></div>
+        <nav class="sidebar-nav">
+            <div class="nav-group-title">数据库管理</div>
+            <a class="nav-item" href="index.html"><i class="fas fa-server"></i> 实例管理</a>
+            <a class="nav-item" href="tables.html"><i class="fas fa-table"></i> 表管理</a>
+            <a class="nav-item active" href="sql-query.html"><i class="fas fa-terminal"></i> SQL查询</a>
+        </nav>
+        <div class="sidebar-footer"><a href="../../index.html"><i class="fas fa-arrow-left"></i> 返回门户首页</a></div>
+    </div>
+    <div class="main-content">
+        <div class="main-header">
+            <h2>SQL查询</h2>
+            <div class="user-dropdown">
+                <div class="user-dropdown-trigger">
+                    <div style="width:32px;height:32px;border-radius:50%;background:#8B5CF6;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;"><i class="fas fa-user"></i></div>
+                    <span class="user-name" style="font-size:14px;"></span>
+                </div>
+                <div class="user-dropdown-menu">
+                    <a href="../../profile.html"><i class="fas fa-id-card"></i> 个人信息</a>
+                    <a href="javascript:void(0)" onclick="showChangePwdModal()"><i class="fas fa-key"></i> 修改密码</a>
+                    <div class="divider"></div>
+                    <a href="javascript:void(0)" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> 退出登录</a>
+                </div>
+            </div>
+        </div>
+        <div class="main-body">
+            <div class="sql-page">
+                <div class="sql-toolbar-card">
+                    <div class="sql-toolbar-left">
+                        <div class="sql-field">
+                            <label for="dbTypeFilter">数据库类型</label>
+                            <select class="filter-select" id="dbTypeFilter" onchange="onDbTypeChange()" style="min-width:120px;">
+                                <option value="">请选择</option>
+                            </select>
+                        </div>
+                        <div class="sql-field">
+                            <label for="instanceFilter">实例名称</label>
+                            <select class="filter-select" id="instanceFilter" style="min-width:200px;">
+                                <option value="">请选择在线实例</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sql-workspace" id="sqlWorkspace">
+                    <div class="sql-editor-card" id="sqlEditorCard">
+                        <div class="sql-editor-header">
+                            <h4><i class="fas fa-code"></i> SQL 编辑器 <span class="hint">Ctrl+Enter 执行当前/所有 SQL</span></h4>
+                        </div>
+                        <div class="sql-editor-actions">
+                            <button class="btn btn-secondary btn-sm" onclick="clearEditor()"><i class="fas fa-eraser"></i> 清空</button>
+                            <button class="btn btn-run btn-sm" id="btnRunCurrent" onclick="runSqlCurrent()"><i class="fas fa-play"></i> 执行当前</button>
+                            <button class="btn btn-primary btn-sm" id="btnRunAll" onclick="runSqlAll()"><i class="fas fa-bolt"></i> 执行全部</button>
+                        </div>
+                        <div class="sql-editor-body"><div id="sqlEditorWrap"></div></div>
+                    </div>
+
+                    <div class="sql-resize-handle" id="sqlResizeHandle" title="拖动调整高度"></div>
+
+                    <div class="sql-result-card" id="sqlResultCard">
+                        <div class="sql-result-header">
+                            <h4><i class="fas fa-table-list"></i> 执行结果</h4>
+                            <span class="sql-result-meta" id="resultMeta">等待执行</span>
+                        </div>
+                        <div class="sql-result-body" id="resultBody">
+                            <div class="empty-tip">选择在线实例并编写 SQL 后执行</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
+<script src="../../js/config.js"></script>
+<script src="js/sql-query.js"></script>
+</body>
+</html>

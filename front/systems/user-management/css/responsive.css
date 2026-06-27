@@ -1,0 +1,5 @@
+@media (max-width: 768px) {
+    .sidebar { width: 200px; }
+    .main-content { margin-left: 200px; }
+    .stats-row { grid-template-columns: 1fr; }
+}

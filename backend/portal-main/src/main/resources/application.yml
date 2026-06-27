@@ -1,0 +1,40 @@
+server:
+  port: 8080
+
+spring:
+  profiles:
+    active: dev  # 切换环境: dev / prod
+  datasource:
+    main:
+      jdbc-url: jdbc:mysql://${db.main.host}:${db.main.port}/${db.main.name}?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+      username: ${db.main.username}
+      password: ${db.main.password}
+      driver-class-name: com.mysql.jdbc.Driver
+    order:
+      jdbc-url: jdbc:mysql://${db.order.host}:${db.order.port}/${db.order.name}?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+      username: ${db.order.username}
+      password: ${db.order.password}
+      driver-class-name: com.mysql.jdbc.Driver
+    dbmgmt:
+      jdbc-url: jdbc:mysql://${db.dbmgmt.host}:${db.dbmgmt.port}/${db.dbmgmt.name}?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+      username: ${db.dbmgmt.username}
+      password: ${db.dbmgmt.password}
+      driver-class-name: com.mysql.jdbc.Driver
+    log:
+      jdbc-url: jdbc:mysql://${db.log.host}:${db.log.port}/${db.log.name}?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+      username: ${db.log.username}
+      password: ${db.log.password}
+      driver-class-name: com.mysql.jdbc.Driver
+
+mybatis-plus:
+  global-config:
+    db-config:
+      insert-strategy: not_null
+      update-strategy: not_null
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+jwt:
+  secret: ${jwt.secret}
+  expiration: 86400000

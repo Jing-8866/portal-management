@@ -1,0 +1,8 @@
+@media (max-width: 768px) {
+    .header { padding: 0 16px; }
+    .content-wrapper { padding: 16px; }
+    .stats-row { grid-template-columns: 1fr; }
+    .toolbar { flex-direction: column; align-items: stretch; }
+    .search-box input { width: 100%; }
+    .modal { width: 95%; margin: 0 10px; }
+}
