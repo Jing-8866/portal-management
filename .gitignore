@@ -1,29 +1,3 @@
 # ==================================
 # Git Ignore - 后端项目
 # ==================================
-
-# 编译输出
-target/
-*.class
-
-# IDE
-../.idea/
-*.iml
-.vscode/
-.project
-.classpath
-.settings/
-
-# 日志
-*.log
-logs/
-
-# ==============================
-# 敏感配置文件（禁止提交）
-# ==============================
-**/secrets-*.properties
-**/secrets-*.yml
-
-# OS
-.DS_Store
-Thumbs.db
