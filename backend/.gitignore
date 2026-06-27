@@ -24,8 +24,8 @@ logs/
 **/secrets-*.properties
 **/secrets-*.yml
 
-# 但允许提交 portal-main/config/ 下的 secrets-prod.properties
-!config/secrets-example.properties
+# 但允许提交根目录下 config/config/secrets-example.properties 作为安全配置模板
+!../config/secrets-example.properties
 
 # OS
 .DS_Store
