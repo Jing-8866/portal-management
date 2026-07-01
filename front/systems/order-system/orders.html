@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的订单 - 订单商城</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="layout">
+    <div class="sidebar"></div>
+    <div class="main-content">
+        <div class="main-header">
+            <h2>我的订单</h2>
+            <div class="user-dropdown"><div class="user-dropdown-trigger"><div style="width:32px;height:32px;border-radius:50%;background:#F59E0B;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;"><i class="fas fa-user"></i></div><span class="user-name" style="font-size:14px;"></span></div>
+                <div class="user-dropdown-menu"><a href="../../profile.html"><i class="fas fa-id-card"></i> 个人信息</a><a href="javascript:void(0)" onclick="showChangePwdModal()"><i class="fas fa-key"></i> 修改密码</a><div class="divider"></div><a href="javascript:void(0)" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> 退出登录</a></div>
+            </div>
+        </div>
+        <div class="main-body">
+            <div class="stats-row stats-row-4">
+                <div class="stat-card"><div class="stat-icon" style="background:#3B82F6;"><i class="fas fa-file-lines"></i></div><div class="stat-info"><h3 id="stat-total">0</h3><p>订单总数</p></div></div>
+                <div class="stat-card"><div class="stat-icon" style="background:#F59E0B;"><i class="fas fa-clock"></i></div><div class="stat-info"><h3 id="stat-pending">0</h3><p>待付款</p></div></div>
+                <div class="stat-card"><div class="stat-icon" style="background:#8B5CF6;"><i class="fas fa-truck"></i></div><div class="stat-info"><h3 id="stat-paid">0</h3><p>待发货</p></div></div>
+                <div class="stat-card"><div class="stat-icon" style="background:#10B981;"><i class="fas fa-check-circle"></i></div><div class="stat-info"><h3 id="stat-completed">0</h3><p>已完成</p></div></div>
+            </div>
+            <div class="toolbar">
+                <div class="toolbar-left">
+                    <div class="search-box"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="搜索订单号..." oninput="applyFilter()" autocomplete="off"></div>
+                    <select class="filter-select" id="statusFilter" onchange="onFilterChange()">
+                        <option value="">全部状态</option>
+                        <option value="pending">待付款</option>
+                        <option value="paid">待发货</option>
+                        <option value="shipped">待收货</option>
+                        <option value="completed">已完成</option>
+                        <option value="cancelled">已取消</option>
+                        <option value="refunding">退款中</option>
+                        <option value="refunded">已退款</option>
+                        <option value="returning">退货中</option>
+                        <option value="returned">已退货</option>
+                    </select>
+                    <input type="date" class="filter-select" id="startDate" onchange="onFilterChange()">
+                    <span style="color:#999;">至</span>
+                    <input type="date" class="filter-select" id="endDate" onchange="onFilterChange()">
+                </div>
+            </div>
+            <div class="table-container">
+                <table><thead><tr id="orderTableHead"></tr></thead>
+                <tbody id="orderTableBody"></tbody></table>
+                <div class="pagination" id="pagination"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../../js/config.js"></script>
+<script src="js/order-common.js"></script>
+<script src="js/orders-list.js"></script>
+<script>
+initOrderListPage({
+    scope: 'mine',
+    activePage: 'orders.html',
+    showCountdown: true
+});
+</script>
+</body>
+</html>

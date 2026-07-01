@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>收货地址 - 订单商城</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="layout">
+    <div class="sidebar"></div>
+    <div class="main-content">
+        <div class="main-header">
+            <h2>收货地址</h2>
+            <div class="user-dropdown"><div class="user-dropdown-trigger"><div style="width:32px;height:32px;border-radius:50%;background:#F59E0B;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;"><i class="fas fa-user"></i></div><span class="user-name" style="font-size:14px;"></span></div>
+                <div class="user-dropdown-menu"><a href="../../profile.html"><i class="fas fa-id-card"></i> 个人信息</a><a href="javascript:void(0)" onclick="showChangePwdModal()"><i class="fas fa-key"></i> 修改密码</a><div class="divider"></div><a href="javascript:void(0)" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> 退出登录</a></div>
+            </div>
+        </div>
+        <div class="main-body">
+            <div class="toolbar">
+                <div class="toolbar-left"><p style="color:#666;font-size:14px;">管理您的收货地址，下单时可快速选择</p></div>
+                <div class="toolbar-right">
+                    <button class="btn btn-primary" onclick="openAddressModal()"><i class="fas fa-plus"></i> 新增地址</button>
+                </div>
+            </div>
+            <div id="addressList" class="address-list"></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="addressModal" style="display:none;">
+    <div class="modal-box">
+        <div class="modal-header"><h3 id="addressModalTitle">新增地址</h3><button onclick="closeAddressModal()">&times;</button></div>
+        <div class="modal-body">
+            <div class="form-grid">
+                <label>标签<input type="text" id="aLabel" placeholder="如：家、公司"></label>
+                <label>收货人 *<input type="text" id="aName"></label>
+                <label>联系电话 *<input type="text" id="aPhone"></label>
+                <label>省份<input type="text" id="aProvince" placeholder="如：广东省"></label>
+                <label>城市<input type="text" id="aCity" placeholder="如：深圳市"></label>
+                <label>区/县<input type="text" id="aDistrict" placeholder="如：南山区"></label>
+                <label class="full">详细地址 *<input type="text" id="aDetail" placeholder="街道、门牌号等"></label>
+                <label class="full checkbox-row" for="aDefault">
+                    <input type="checkbox" id="aDefault">
+                    <span>设为默认地址</span>
+                </label>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeAddressModal()">取消</button>
+            <button class="btn btn-primary" onclick="saveAddress()">保存</button>
+        </div>
+    </div>
+</div>
+
+<script src="../../js/config.js"></script>
+<script src="js/order-common.js"></script>
+<script src="js/addresses.js"></script>
+</body>
+</html>

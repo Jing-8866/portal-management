@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分类管理 - 订单商城</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="layout">
+    <div class="sidebar"></div>
+    <div class="main-content">
+        <div class="main-header">
+            <h2>商品分类管理</h2>
+            <div class="user-dropdown"><div class="user-dropdown-trigger"><div style="width:32px;height:32px;border-radius:50%;background:#F59E0B;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;"><i class="fas fa-user"></i></div><span class="user-name" style="font-size:14px;"></span></div>
+                <div class="user-dropdown-menu"><a href="../../profile.html"><i class="fas fa-id-card"></i> 个人信息</a><a href="javascript:void(0)" onclick="showChangePwdModal()"><i class="fas fa-key"></i> 修改密码</a><div class="divider"></div><a href="javascript:void(0)" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> 退出登录</a></div>
+            </div>
+        </div>
+        <div class="main-body">
+            <div class="toolbar">
+                <div class="toolbar-left">
+                    <div class="search-box"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="搜索分类名称..." oninput="applyCategoryFilter()" autocomplete="off"></div>
+                </div>
+                <div class="toolbar-right">
+                    <button class="btn btn-primary" onclick="openCategoryModal()"><i class="fas fa-plus"></i> 新增分类</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table><thead><tr><th>序号</th><th>分类名称</th><th>排序</th><th>商品数量</th><th>创建时间</th><th>操作</th></tr></thead>
+                <tbody id="categoryTableBody"></tbody></table>
+                <div class="pagination" id="pagination"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="categoryModal" style="display:none;">
+    <div class="modal-box">
+        <div class="modal-header"><h3 id="categoryModalTitle">新增分类</h3><button onclick="closeCategoryModal()">&times;</button></div>
+        <div class="modal-body">
+            <div class="form-grid">
+                <label class="full">分类名称 *<input type="text" id="cName" placeholder="如：办公用品"></label>
+                <label class="full">排序<input type="number" id="cSortOrder" min="0" value="0" placeholder="数字越小越靠前"></label>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeCategoryModal()">取消</button>
+            <button class="btn btn-primary" onclick="saveCategory()">保存</button>
+        </div>
+    </div>
+</div>
+
+<script src="../../js/config.js"></script>
+<script src="js/order-common.js"></script>
+<script src="js/category-admin.js"></script>
+</body>
+</html>

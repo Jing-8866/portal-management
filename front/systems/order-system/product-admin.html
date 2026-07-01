@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品管理 - 订单商城</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="layout">
+    <div class="sidebar"></div>
+    <div class="main-content">
+        <div class="main-header">
+            <h2>商品管理</h2>
+            <div class="user-dropdown"><div class="user-dropdown-trigger"><div style="width:32px;height:32px;border-radius:50%;background:#F59E0B;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;"><i class="fas fa-user"></i></div><span class="user-name" style="font-size:14px;"></span></div>
+                <div class="user-dropdown-menu"><a href="../../profile.html"><i class="fas fa-id-card"></i> 个人信息</a><a href="javascript:void(0)" onclick="showChangePwdModal()"><i class="fas fa-key"></i> 修改密码</a><div class="divider"></div><a href="javascript:void(0)" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> 退出登录</a></div>
+            </div>
+        </div>
+        <div class="main-body">
+            <div class="toolbar">
+                <div class="toolbar-left">
+                    <div class="search-box"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="搜索商品..." oninput="applyAdminFilter()" autocomplete="off"></div>
+                    <select class="filter-select" id="statusFilter" onchange="applyAdminFilter()">
+                        <option value="">全部状态</option>
+                        <option value="on_shelf">上架</option>
+                        <option value="off_shelf">下架</option>
+                    </select>
+                </div>
+                <div class="toolbar-right">
+                    <button class="btn btn-primary" onclick="openProductModal()"><i class="fas fa-plus"></i> 新增商品</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table><thead><tr><th>序号</th><th>名称</th><th>分类</th><th>价格</th><th>库存</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead>
+                <tbody id="productTableBody"></tbody></table>
+                <div class="pagination" id="pagination"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="productModal" style="display:none;">
+    <div class="modal-box modal-wide">
+        <div class="modal-header"><h3 id="productModalTitle">新增商品</h3><button onclick="closeProductModal()">&times;</button></div>
+        <div class="modal-body">
+            <div class="form-grid">
+                <label>名称 *<input type="text" id="pName"></label>
+                <label>分类<select id="pCategory"><option value="">请选择分类</option></select></label>
+                <label>价格 *<input type="number" id="pPrice" step="0.01" min="0"></label>
+                <label>库存<input type="number" id="pStock" min="0" value="0"></label>
+                <label class="full">描述<textarea id="pDesc" rows="3"></textarea></label>
+                <div class="full product-image-field">
+                    <div class="field-label">商品图片</div>
+                    <div class="image-mode-tabs">
+                        <button type="button" class="image-mode-tab active" data-mode="url" onclick="switchImageMode('url')">网络图片</button>
+                        <button type="button" class="image-mode-tab" data-mode="upload" onclick="switchImageMode('upload')">本地上传</button>
+                    </div>
+                    <div id="imageUrlPanel" class="image-mode-panel">
+                        <input type="text" id="pImageUrl" placeholder="输入图片 URL，如 https://example.com/image.jpg" oninput="updateProductImagePreview()">
+                        <p class="field-hint">支持 http / https 外链图片</p>
+                    </div>
+                    <div id="imageUploadPanel" class="image-mode-panel" style="display:none;">
+                        <div class="upload-row">
+                            <input type="file" id="pImageFile" accept="image/jpeg,image/png,image/gif,image/webp" onchange="uploadProductImage(this)">
+                            <span class="field-hint">支持 JPG、PNG、GIF、WEBP，最大 5MB</span>
+                        </div>
+                    </div>
+                    <div class="image-preview-wrap">
+                        <div id="pImagePreview" class="image-preview empty"><i class="fas fa-image"></i><span>图片预览</span></div>
+                    </div>
+                </div>
+                <label>状态<select id="pStatus"><option value="on_shelf">上架</option><option value="off_shelf">下架</option></select></label>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeProductModal()">取消</button>
+            <button class="btn btn-primary" onclick="saveProduct()">保存</button>
+        </div>
+    </div>
+</div>
+
+<script src="../../js/config.js"></script>
+<script src="js/order-common.js"></script>
+<script src="js/product-admin.js"></script>
+</body>
+</html>

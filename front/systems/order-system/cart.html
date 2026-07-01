@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>购物车 - 订单商城</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="layout">
+    <div class="sidebar"></div>
+    <div class="main-content">
+        <div class="main-header">
+            <h2>购物车</h2>
+            <div class="user-dropdown"><div class="user-dropdown-trigger"><div style="width:32px;height:32px;border-radius:50%;background:#F59E0B;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;"><i class="fas fa-user"></i></div><span class="user-name" style="font-size:14px;"></span></div>
+                <div class="user-dropdown-menu"><a href="../../profile.html"><i class="fas fa-id-card"></i> 个人信息</a><a href="javascript:void(0)" onclick="showChangePwdModal()"><i class="fas fa-key"></i> 修改密码</a><div class="divider"></div><a href="javascript:void(0)" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> 退出登录</a></div>
+            </div>
+        </div>
+        <div class="main-body">
+            <div id="cartContainer"></div>
+            <div class="checkout-panel" id="checkoutBar" style="display:none;">
+                <div class="checkout-form">
+                    <div class="checkout-form-head">
+                        <h4>选择收货地址</h4>
+                        <a href="addresses.html" class="btn-link">管理地址</a>
+                    </div>
+                    <div id="addressSelectList" class="address-select-list"></div>
+                    <div class="form-grid" style="margin-top:16px;">
+                        <input type="text" id="customerName" placeholder="下单人（可选）" class="full">
+                        <input type="text" id="remark" placeholder="订单备注（可选）" class="full">
+                    </div>
+                </div>
+                <div class="checkout-summary">
+                    <div class="checkout-total">合计：<span id="cartTotal">¥0.00</span></div>
+                    <button class="btn btn-primary btn-lg" onclick="submitCheckout()"><i class="fas fa-check"></i> 提交订单</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../../js/config.js"></script>
+<script src="js/order-common.js"></script>
+<script src="js/cart.js"></script>
+</body>
+</html>
