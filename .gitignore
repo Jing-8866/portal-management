@@ -16,6 +16,9 @@
 logs/
 
 
+# 排除文件
+开发指引.md
+
 # OS
 .DS_Store
 Thumbs.db
