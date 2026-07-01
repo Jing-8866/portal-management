@@ -4,7 +4,7 @@
 
 
 # IDE
-../.idea/
+.idea/
 *.iml
 .vscode/
 .project
