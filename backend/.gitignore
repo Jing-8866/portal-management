@@ -30,3 +30,7 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+
+# 商品上传图片（保留目录结构）
+uploads/products/*
+!uploads/products/.gitkeep

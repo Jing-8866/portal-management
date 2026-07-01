@@ -2,7 +2,8 @@
 let allSystems = [];
 
 document.addEventListener('DOMContentLoaded', function() {
-    if (!isLoggedIn()) { window.location.href = 'login.html'; return; }
+    if (!isLoggedIn()) { window.location.replace('login.html'); return; }
+    document.documentElement.classList.add('portal-ready');
     initUserDropdown(); clearSearchInputs();
     loadSubsystems();
 });

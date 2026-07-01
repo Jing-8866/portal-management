@@ -9,6 +9,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
 
@@ -23,15 +25,22 @@ public class OrderDataSourceConfig {
     }
 
     @Bean(name = "orderSqlSessionFactory")
-    public SqlSessionFactory orderSqlSessionFactory(@Qualifier("orderDataSource") DataSource dataSource) throws Exception {
+    public SqlSessionFactory orderSqlSessionFactory(
+            @Qualifier("orderDataSource") DataSource dataSource) throws Exception {
         MybatisSqlSessionFactoryBean bean = new MybatisSqlSessionFactoryBean();
         bean.setDataSource(dataSource);
-        bean.getObject().getConfiguration().setMapUnderscoreToCamelCase(true);
-        return bean.getObject();
+        SqlSessionFactory factory = bean.getObject();
+        factory.getConfiguration().setMapUnderscoreToCamelCase(true);
+        return factory;
     }
 
     @Bean(name = "orderSqlSessionTemplate")
     public SqlSessionTemplate orderSqlSessionTemplate(@Qualifier("orderSqlSessionFactory") SqlSessionFactory sqlSessionFactory) {
         return new SqlSessionTemplate(sqlSessionFactory);
+    }
+
+    @Bean(name = "orderTransactionManager")
+    public PlatformTransactionManager orderTransactionManager(@Qualifier("orderDataSource") DataSource dataSource) {
+        return new DataSourceTransactionManager(dataSource);
     }
 }

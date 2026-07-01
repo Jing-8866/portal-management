@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>订单详情 - 订单管理系统</title>
+    <title>订单详情 - 订单商城</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <style>
@@ -10,36 +10,47 @@
         .detail-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid #f0f0f0; }
         .detail-header h3 { font-size:18px; font-weight:600; }
         .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
-        .detail-item { }
         .detail-item .label { font-size:13px; color:#999; margin-bottom:4px; }
         .detail-item .value { font-size:15px; font-weight:500; color:#333; }
         .detail-item.full { grid-column:1/-1; }
-        .status-tag { display:inline-flex; align-items:center; padding:4px 12px; border-radius:12px; font-size:13px; font-weight:500; }
-        .status-tag.pending { background:#FEF3C7; color:#D97706; }
-        .status-tag.processing { background:#DBEAFE; color:#2563EB; }
-        .status-tag.completed { background:#D1FAE5; color:#059669; }
-        .status-tag.cancelled { background:#FEE2E2; color:#DC2626; }
         .amount-value { font-size:24px; font-weight:700; color:#F59E0B; }
-        .action-bar { margin-top:24px; padding-top:16px; border-top:1px solid #f0f0f0; display:flex; gap:12px; }
+        .action-bar { margin-top:24px; padding-top:16px; border-top:1px solid #f0f0f0; display:flex; flex-wrap:wrap; gap:12px; }
+        .items-table { width:100%; margin-top:24px; border-collapse:collapse; }
+        .items-table th, .items-table td { padding:10px 12px; border-bottom:1px solid #f0f0f0; text-align:left; font-size:14px; }
+        .items-table th { background:#f8fafc; color:#64748b; }
+        .logistics-section { margin-top:28px; padding-top:24px; border-top:1px solid #f0f0f0; }
+        .logistics-title { font-size:16px; font-weight:600; margin-bottom:20px; color:#334155; display:flex; align-items:center; gap:8px; }
+        .logistics-title i { color:#F59E0B; }
+        .logistics-timeline { padding-left:4px; }
+        .logistics-step { display:flex; gap:16px; position:relative; padding-bottom:24px; }
+        .logistics-step:not(.last)::before { content:''; position:absolute; left:11px; top:28px; bottom:0; width:2px; background:#e2e8f0; }
+        .logistics-step.done:not(.last)::before { background:#F59E0B; }
+        .logistics-step.active:not(.last)::before { background:linear-gradient(#F59E0B 0%, #e2e8f0 100%); }
+        .logistics-dot { width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:10px; z-index:1; }
+        .logistics-step.done .logistics-dot { background:#F59E0B; color:#fff; }
+        .logistics-step.active .logistics-dot { background:#fff; color:#F59E0B; border:2px solid #F59E0B; box-shadow:0 0 0 4px rgba(245,158,11,0.15); }
+        .logistics-step.wait .logistics-dot { background:#f1f5f9; color:#94a3b8; }
+        .logistics-step.failed .logistics-dot { background:#FEE2E2; color:#DC2626; }
+        .logistics-step-title { font-size:15px; font-weight:600; color:#334155; }
+        .logistics-step.active .logistics-step-title { color:#F59E0B; }
+        .logistics-step.failed .logistics-step-title { color:#DC2626; }
+        .logistics-step.wait .logistics-step-title { color:#94a3b8; }
+        .logistics-step-desc { font-size:13px; color:#64748b; margin-top:4px; }
+        .logistics-step-location { font-size:13px; color:#475569; margin-top:6px; display:flex; align-items:flex-start; gap:6px; line-height:1.5; }
+        .logistics-step-location i { color:#F59E0B; margin-top:3px; flex-shrink:0; }
+        .logistics-step.active .logistics-step-location i { color:#F59E0B; }
+        .logistics-step.wait .logistics-step-location { color:#94a3b8; }
+        .logistics-step.wait .logistics-step-location i { color:#cbd5e1; }
+        .logistics-step-time { font-size:12px; color:#94a3b8; margin-top:4px; }
     </style>
 </head>
 <body>
 <div class="layout">
-    <div class="sidebar">
-        <div class="sidebar-header"><div class="logo"><i class="fas fa-cart-shopping"></i></div><h2>订单管理系统</h2></div>
-        <nav class="sidebar-nav">
-            <div class="nav-group-title">订单管理</div>
-            <a class="nav-item" href="index.html"><i class="fas fa-list-alt"></i> 订单列表</a>
-            <a class="nav-item" href="order-create.html"><i class="fas fa-plus-circle"></i> 新建订单</a>
-            <div class="nav-group-title">数据分析</div>
-            <a class="nav-item" href="order-stats.html"><i class="fas fa-chart-bar"></i> 订单统计</a>
-        </nav>
-        <div class="sidebar-footer"><a href="../../index.html"><i class="fas fa-arrow-left"></i> 返回门户首页</a></div>
-    </div>
+    <div class="sidebar"></div>
     <div class="main-content">
         <div class="main-header">
             <h2>订单详情</h2>
-            <div class="user-dropdown"><div class="user-dropdown-trigger"><div class="user-avatar"><i class="fas fa-user"></i></div><span class="user-name"></span></div><div class="user-dropdown-menu"><a href="../../profile.html"><i class="fas fa-id-card"></i> 个人信息</a><a href="javascript:void(0)" onclick="showChangePwdModal()"><i class="fas fa-key"></i> 修改密码</a><div class="divider"></div><a href="javascript:void(0)" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> 退出登录</a></div></div>
+            <div class="user-dropdown"><div class="user-dropdown-trigger"><div class="user-avatar" style="width:32px;height:32px;border-radius:50%;background:#F59E0B;display:flex;align-items:center;justify-content:center;color:#fff;"><i class="fas fa-user"></i></div><span class="user-name"></span></div><div class="user-dropdown-menu"><a href="../../profile.html"><i class="fas fa-id-card"></i> 个人信息</a><a href="javascript:void(0)" onclick="showChangePwdModal()"><i class="fas fa-key"></i> 修改密码</a><div class="divider"></div><a href="javascript:void(0)" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> 退出登录</a></div></div>
         </div>
         <div class="main-body">
             <div style="margin-bottom:16px;"><button class="btn btn-secondary" onclick="goBackToList()"><i class="fas fa-arrow-left"></i> 返回列表</button></div>
@@ -48,56 +59,107 @@
     </div>
 </div>
 <script src="../../js/config.js"></script>
+<script src="js/order-common.js"></script>
 <script>
 var orderId;
-document.addEventListener('DOMContentLoaded', function(){
-    if(!isLoggedIn()){window.location.href='../../login.html';return;}
-    initUserDropdown(); highlightNav();
-    var params=new URLSearchParams(window.location.search);
-    orderId=params.get('id');
-    if(!orderId){showToast('缺少订单ID','error');return;}
+document.addEventListener('DOMContentLoaded', function () {
+    if (!initOrderLayout('orders.html')) return;
+    var params = new URLSearchParams(window.location.search);
+    orderId = params.get('id');
+    if (!orderId) { showToast('缺少订单ID', 'error'); return; }
     loadDetail();
 });
-function highlightNav(){var page=window.location.pathname.split('/').pop();document.querySelectorAll('.nav-item').forEach(function(item){var href=item.getAttribute('href');if(href&&href.split('/').pop()===page)item.classList.add('active');else item.classList.remove('active');});}
 
-async function loadDetail(){
-    try{
-        var order=await request('/orders/'+orderId);
-        if(!order){document.getElementById('detailCard').innerHTML='<p style="color:#999;">订单不存在</p>';return;}
-        var statusMap={pending:'待处理',processing:'处理中',completed:'已完成',cancelled:'已取消'};
-        var statusHtml='<span class="status-tag '+(order.status||'')+'">'+( statusMap[order.status]||order.status)+'</span>';
-        var html='<div class="detail-header"><h3>'+order.orderNo+'</h3>'+statusHtml+'</div>';
-        html+='<div class="detail-grid">';
-        html+='<div class="detail-item"><div class="label">客户名称</div><div class="value">'+(order.customerName||'-')+'</div></div>';
-        html+='<div class="detail-item"><div class="label">订单金额</div><div class="amount-value">¥'+(order.amount||0).toFixed(2)+'</div></div>';
-        html+='<div class="detail-item"><div class="label">创建时间</div><div class="value">'+formatTime(order.createdTime)+'</div></div>';
-        html+='<div class="detail-item"><div class="label">更新时间</div><div class="value">'+formatTime(order.updatedTime)+'</div></div>';
-        html+='<div class="detail-item full"><div class="label">备注</div><div class="value">'+(order.description||'无')+'</div></div>';
-        html+='</div>';
-        // 操作按钮
-        if(isAdmin()&&(order.status==='pending'||order.status==='processing')){
-            html+='<div class="action-bar">';
-            if(order.status==='pending') html+='<button class="btn btn-primary" onclick="changeStatus(\'processing\')"><i class="fas fa-play"></i> 开始处理</button>';
-            html+='<button class="btn btn-success" style="background:#10B981;color:#fff;" onclick="changeStatus(\'completed\')"><i class="fas fa-check"></i> 标记完成</button>';
-            html+='<button class="btn btn-danger" style="background:#EF4444;color:#fff;" onclick="changeStatus(\'cancelled\')"><i class="fas fa-times"></i> 取消订单</button>';
-            html+='</div>';
+async function loadDetail() {
+    try {
+        var data = await request('/orders/' + orderId);
+        if (!data || !data.order) {
+            document.getElementById('detailCard').innerHTML = '<p style="color:#999;">订单不存在</p>';
+            return;
         }
-        document.getElementById('detailCard').innerHTML=html;
-    }catch(e){document.getElementById('detailCard').innerHTML='<p style="color:#ff4d4f;">加载失败</p>';}
+        var order = data.order;
+        var items = data.items || [];
+        var html = '<div class="detail-header"><h3>' + order.orderNo + '</h3>' + orderStatusBadge(order.status) + '</div>';
+        html += '<div class="detail-grid">';
+        html += '<div class="detail-item"><div class="label">客户/下单人</div><div class="value">' + (order.customerName || '-') + '</div></div>';
+        html += '<div class="detail-item"><div class="label">订单金额</div><div class="amount-value">' + formatMoney(order.amount) + '</div></div>';
+        html += '<div class="detail-item"><div class="label">收货人</div><div class="value">' + (order.receiverName || '-') + '</div></div>';
+        html += '<div class="detail-item"><div class="label">联系电话</div><div class="value">' + (order.receiverPhone || '-') + '</div></div>';
+        html += '<div class="detail-item full"><div class="label">收货地址</div><div class="value">' + (order.receiverAddress || '-') + '</div></div>';
+        html += '<div class="detail-item"><div class="label">创建时间</div><div class="value">' + formatTime(order.createdTime) + '</div></div>';
+        html += '<div class="detail-item"><div class="label">更新时间</div><div class="value">' + formatTime(order.updatedTime) + '</div></div>';
+        html += '<div class="detail-item full"><div class="label">备注</div><div class="value">' + (order.remark || '无') + '</div></div>';
+        html += '</div>';
+
+        html += buildLogisticsTimelineHtml(order, data.logistics);
+
+        if (items.length) {
+            html += '<h4 style="margin-top:24px;margin-bottom:12px;">商品明细</h4><table class="items-table"><thead><tr><th>商品</th><th>单价</th><th>数量</th><th>小计</th></tr></thead><tbody>';
+            items.forEach(function (it) {
+                html += '<tr><td>' + (it.productName || '') + '</td><td>' + formatMoney(it.productPrice) + '</td><td>' + (it.quantity || 0) + '</td><td>' + formatMoney(it.subtotal) + '</td></tr>';
+            });
+            html += '</tbody></table>';
+        }
+
+        html += buildActionBar(order);
+        document.getElementById('detailCard').innerHTML = html;
+    } catch (e) {
+        document.getElementById('detailCard').innerHTML = '<p style="color:#ff4d4f;">' + (e.message || '加载失败') + '</p>';
+    }
 }
-async function changeStatus(status){
-    var statusMap={processing:'处理',completed:'完成',cancelled:'取消'};
-    if(!confirm('确定将订单状态改为「'+statusMap[status]+'」？'))return;
-    try{
-        await request('/orders/'+orderId+'/status?status='+status,{method:'PUT'});
-        sessionStorage.setItem('orderListNeedRefresh','1');
-        showToast('状态已更新','success');
+
+function buildActionBar(order) {
+    var html = '<div class="action-bar">';
+    var s = order.status;
+    var admin = isAdmin();
+
+    if (s === 'pending' && !admin) {
+        html += btn('paid', '模拟付款', 'btn-primary');
+        html += btn('cancelled', '取消订单', 'btn-danger');
+    }
+    if (s === 'paid' && admin) html += btn('shipped', '发货', 'btn-primary');
+    if (s === 'shipped' && !admin) html += btn('completed', '确认收货', 'btn-success');
+    if ((s === 'paid' || s === 'shipped' || s === 'completed') && !admin) {
+        html += btn('refunding', '申请退款', 'btn-secondary');
+    }
+    if (s === 'completed' && !admin) {
+        html += btn('returning', '申请退货', 'btn-secondary');
+    }
+    if (s === 'refunding' && admin) {
+        html += btn('refunded', '同意退款', 'btn-success');
+        html += btn('paid', '拒绝退款', 'btn-secondary');
+    }
+    if (s === 'returning' && admin) {
+        html += btn('returned', '同意退货', 'btn-success');
+        html += btn('completed', '拒绝退货', 'btn-secondary');
+    }
+    if (s === 'paid' && admin) html += btn('cancelled', '取消订单', 'btn-danger');
+    if (s === 'cancelled' && !admin) {
+        html += '<button class="btn btn-primary" onclick="reorderToCart(' + order.id + ')"><i class="fas fa-cart-plus"></i> 重新加入购物车</button>';
+    }
+
+    html += '</div>';
+    return html;
+}
+
+function btn(status, label, cls) {
+    return '<button class="btn ' + cls + '" onclick="changeStatus(\'' + status + '\')">' + label + '</button>';
+}
+
+async function changeStatus(status) {
+    var label = ORDER_STATUS_MAP[status] || status;
+    if (!confirm('确定执行「' + label + '」？')) return;
+    try {
+        await request('/orders/' + orderId + '/status?status=' + status, { method: 'PUT' });
+        sessionStorage.setItem('orderListNeedRefresh', '1');
+        showToast('操作成功', 'success');
         loadDetail();
-    }catch(e){showToast(e.message||'操作失败','error');}
+    } catch (e) { showToast(e.message || '操作失败', 'error'); }
 }
-function goBackToList(){
-    sessionStorage.setItem('orderListNeedRefresh','1');
-    window.location.href='index.html';
+
+function goBackToList() {
+    sessionStorage.setItem('orderListNeedRefresh', '1');
+    window.location.href = 'orders.html';
 }
 </script>
 </body>

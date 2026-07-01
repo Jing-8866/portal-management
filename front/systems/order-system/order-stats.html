@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>订单统计 - 订单管理系统</title>
+    <title>订单统计 - 订单商城</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <style>
@@ -21,7 +21,7 @@
         .chart-section h4 { font-size:14px; color:#666; margin-bottom:20px; padding-bottom:10px; border-bottom:1px solid #f0f0f0; }
         .bar-chart { display:flex; align-items:flex-end; gap:12px; height:200px; padding:0 20px; }
         .bar-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; }
-        .bar { width:100%; border-radius:4px 4px 0 0; background:linear-gradient(180deg, #F59E0B 0%, #FBBF24 100%); min-height:4px; transition:height 0.5s ease; }
+        .bar { width:100%; border-radius:4px 4px 0 0; background:linear-gradient(180deg, #F59E0B 0%, #FBBF24 100%); min-height:4px; }
         .bar-label { font-size:11px; color:#999; white-space:nowrap; }
         .bar-value { font-size:12px; font-weight:600; color:#333; }
         .summary-row { display:flex; gap:16px; margin-bottom:24px; }
@@ -33,108 +33,87 @@
 </head>
 <body>
 <div class="layout">
-    <div class="sidebar">
-        <div class="sidebar-header"><div class="logo"><i class="fas fa-cart-shopping"></i></div><h2>订单管理系统</h2></div>
-        <nav class="sidebar-nav">
-            <div class="nav-group-title">订单管理</div>
-            <a class="nav-item" href="index.html"><i class="fas fa-list-alt"></i> 订单列表</a>
-            <a class="nav-item" href="order-create.html"><i class="fas fa-plus-circle"></i> 新建订单</a>
-            <div class="nav-group-title">数据分析</div>
-            <a class="nav-item" href="order-stats.html"><i class="fas fa-chart-bar"></i> 订单统计</a>
-        </nav>
-        <div class="sidebar-footer"><a href="../../index.html"><i class="fas fa-arrow-left"></i> 返回门户首页</a></div>
-    </div>
+    <div class="sidebar"></div>
     <div class="main-content">
         <div class="main-header">
             <h2>订单统计</h2>
-            <div class="user-dropdown"><div class="user-dropdown-trigger"><div class="user-avatar"><i class="fas fa-user"></i></div><span class="user-name"></span></div><div class="user-dropdown-menu"><a href="../../profile.html"><i class="fas fa-id-card"></i> 个人信息</a><a href="javascript:void(0)" onclick="showChangePwdModal()"><i class="fas fa-key"></i> 修改密码</a><div class="divider"></div><a href="javascript:void(0)" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> 退出登录</a></div></div>
+            <div class="user-dropdown"><div class="user-dropdown-trigger"><div class="user-avatar" style="width:32px;height:32px;border-radius:50%;background:#F59E0B;display:flex;align-items:center;justify-content:center;color:#fff;"><i class="fas fa-user"></i></div><span class="user-name"></span></div><div class="user-dropdown-menu"><a href="../../profile.html"><i class="fas fa-id-card"></i> 个人信息</a><a href="javascript:void(0)" onclick="showChangePwdModal()"><i class="fas fa-key"></i> 修改密码</a><div class="divider"></div><a href="javascript:void(0)" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> 退出登录</a></div></div>
         </div>
         <div class="main-body">
-            <!-- 月度汇总 -->
             <div class="summary-row">
                 <div class="summary-item"><div class="icon" style="background:#3B82F6;"><i class="fas fa-file-lines"></i></div><h3 id="monthTotal">-</h3><p>本月订单数</p></div>
                 <div class="summary-item"><div class="icon" style="background:#F59E0B;"><i class="fas fa-dollar-sign"></i></div><h3 id="monthAmount">-</h3><p>本月订单金额</p></div>
                 <div class="summary-item"><div class="icon" style="background:#10B981;"><i class="fas fa-check-circle"></i></div><h3 id="completedCount">-</h3><p>已完成</p></div>
-                <div class="summary-item"><div class="icon" style="background:#EF4444;"><i class="fas fa-clock"></i></div><h3 id="pendingCount">-</h3><p>待处理</p></div>
+                <div class="summary-item"><div class="icon" style="background:#EF4444;"><i class="fas fa-clock"></i></div><h3 id="pendingCount">-</h3><p>待付款</p></div>
             </div>
-
             <div class="stats-grid">
-                <!-- 状态分布 -->
-                <div class="stats-card">
-                    <h4><i class="fas fa-pie-chart"></i> 订单状态分布</h4>
-                    <div class="status-dist" id="statusDist">加载中...</div>
-                </div>
-                <!-- 金额概览 -->
-                <div class="stats-card">
-                    <h4><i class="fas fa-coins"></i> 金额概览</h4>
-                    <div id="amountOverview">加载中...</div>
-                </div>
+                <div class="stats-card"><h4><i class="fas fa-pie-chart"></i> 订单状态分布</h4><div class="status-dist" id="statusDist">加载中...</div></div>
+                <div class="stats-card"><h4><i class="fas fa-coins"></i> 金额概览</h4><div id="amountOverview">加载中...</div></div>
             </div>
-
-            <!-- 7天趋势 -->
-            <div class="chart-section">
-                <h4><i class="fas fa-chart-line"></i> 最近7天订单趋势</h4>
-                <div class="bar-chart" id="trendChart">加载中...</div>
-            </div>
+            <div class="chart-section"><h4><i class="fas fa-chart-line"></i> 最近7天订单趋势</h4><div class="bar-chart" id="trendChart">加载中...</div></div>
         </div>
     </div>
 </div>
 <script src="../../js/config.js"></script>
+<script src="js/order-common.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function(){
-    if(!isLoggedIn()){window.location.href='../../login.html';return;}
-    initUserDropdown(); highlightNav(); loadAllStats();
+document.addEventListener('DOMContentLoaded', function () {
+    if (!initOrderLayout('order-stats.html')) return;
+    if (!isAdmin()) {
+        showToast('无权访问', 'error');
+        setTimeout(function () { window.location.href = 'index.html'; }, 800);
+        return;
+    }
+    loadAllStats();
 });
-function highlightNav(){var page=window.location.pathname.split('/').pop();document.querySelectorAll('.nav-item').forEach(function(item){var href=item.getAttribute('href');if(href&&href.split('/').pop()===page)item.classList.add('active');else item.classList.remove('active');});}
 
-async function loadAllStats(){
-    try{
-        // 月度统计
-        var month=await request('/orders/month-stats');
-        if(month){
-            document.getElementById('monthTotal').textContent=month.monthTotal||0;
-            document.getElementById('monthAmount').textContent='¥'+(Number(month.monthAmount)||0).toFixed(2);
-            document.getElementById('completedCount').textContent=month.completedCount||0;
-            document.getElementById('pendingCount').textContent=month.pendingCount||0;
+async function loadAllStats() {
+    try {
+        var month = await request('/orders/month-stats');
+        if (month) {
+            document.getElementById('monthTotal').textContent = month.monthTotal || 0;
+            document.getElementById('monthAmount').textContent = '¥' + (Number(month.monthAmount) || 0).toFixed(2);
+            document.getElementById('completedCount').textContent = month.completedCount || 0;
+            document.getElementById('pendingCount').textContent = month.pendingCount || 0;
             renderStatusDist(month);
             renderAmountOverview(month);
         }
-        // 趋势
-        var trend=await request('/orders/trend');
-        renderTrend(trend||[]);
-    }catch(e){showToast('加载统计失败','error');}
+        var trend = await request('/orders/trend');
+        renderTrend(trend || []);
+    } catch (e) { showToast('加载统计失败', 'error'); }
 }
 
-function renderStatusDist(data){
-    var items=[
-        {label:'待处理', count:data.pendingCount||0, color:'#F59E0B'},
-        {label:'处理中', count:data.processingCount||0, color:'#3B82F6'},
-        {label:'已完成', count:data.completedCount||0, color:'#10B981'},
-        {label:'已取消', count:data.cancelledCount||0, color:'#EF4444'}
+function renderStatusDist(data) {
+    var items = [
+        { label: '待付款', count: data.pendingCount || 0, color: '#F59E0B' },
+        { label: '待发货', count: data.paidCount || 0, color: '#8B5CF6' },
+        { label: '待收货', count: data.shippedCount || 0, color: '#3B82F6' },
+        { label: '已完成', count: data.completedCount || 0, color: '#10B981' },
+        { label: '已取消', count: data.cancelledCount || 0, color: '#EF4444' }
     ];
-    document.getElementById('statusDist').innerHTML=items.map(function(item){
-        return '<div class="status-item"><div class="status-dot" style="background:'+item.color+';"></div><div><div class="count">'+item.count+'</div><div class="label">'+item.label+'</div></div></div>';
+    document.getElementById('statusDist').innerHTML = items.map(function (item) {
+        return '<div class="status-item"><div class="status-dot" style="background:' + item.color + ';"></div><div><div class="count">' + item.count + '</div><div class="label">' + item.label + '</div></div></div>';
     }).join('');
 }
 
-function renderAmountOverview(data){
-    var total=Number(data.monthAmount)||0;
-    var count=Number(data.monthTotal)||1;
-    var avg=(total/count).toFixed(2);
-    document.getElementById('amountOverview').innerHTML=
-        '<div style="margin-bottom:16px;"><div style="font-size:13px;color:#999;margin-bottom:4px;">本月总金额</div><div class="big-number amount">¥'+total.toFixed(2)+'</div></div>'+
-        '<div style="margin-bottom:16px;"><div style="font-size:13px;color:#999;margin-bottom:4px;">平均订单金额</div><div class="big-number" style="font-size:24px;">¥'+avg+'</div></div>'+
-        '<div><div style="font-size:13px;color:#999;margin-bottom:4px;">订单总数</div><div class="big-number" style="font-size:24px;">'+data.monthTotal+'<span class="unit">笔</span></div></div>';
+function renderAmountOverview(data) {
+    var total = Number(data.monthAmount) || 0;
+    var count = Number(data.monthTotal) || 1;
+    var avg = (total / count).toFixed(2);
+    document.getElementById('amountOverview').innerHTML =
+        '<div style="margin-bottom:16px;"><div style="font-size:13px;color:#999;margin-bottom:4px;">本月总金额</div><div class="big-number amount">¥' + total.toFixed(2) + '</div></div>' +
+        '<div style="margin-bottom:16px;"><div style="font-size:13px;color:#999;margin-bottom:4px;">平均订单金额</div><div class="big-number" style="font-size:24px;">¥' + avg + '</div></div>' +
+        '<div><div style="font-size:13px;color:#999;margin-bottom:4px;">订单总数</div><div class="big-number" style="font-size:24px;">' + data.monthTotal + '<span class="unit">笔</span></div></div>';
 }
 
-function renderTrend(data){
-    if(!data.length){document.getElementById('trendChart').innerHTML='<p style="color:#999;text-align:center;width:100%;">暂无数据</p>';return;}
-    var maxCount=Math.max.apply(null, data.map(function(d){return Number(d.count)||0;}))||1;
-    document.getElementById('trendChart').innerHTML=data.map(function(d){
-        var count=Number(d.count)||0;
-        var height=Math.max((count/maxCount)*160, 4);
-        var dateStr=String(d.date||'').substring(5); // MM-DD
-        return '<div class="bar-col"><div class="bar-value">'+count+'</div><div class="bar" style="height:'+height+'px;"></div><div class="bar-label">'+dateStr+'</div></div>';
+function renderTrend(data) {
+    if (!data.length) { document.getElementById('trendChart').innerHTML = '<p style="color:#999;text-align:center;width:100%;">暂无数据</p>'; return; }
+    var maxCount = Math.max.apply(null, data.map(function (d) { return Number(d.count) || 0; })) || 1;
+    document.getElementById('trendChart').innerHTML = data.map(function (d) {
+        var count = Number(d.count) || 0;
+        var height = Math.max((count / maxCount) * 160, 4);
+        var dateStr = String(d.date || '').substring(5);
+        return '<div class="bar-col"><div class="bar-value">' + count + '</div><div class="bar" style="height:' + height + 'px;"></div><div class="bar-label">' + dateStr + '</div></div>';
     }).join('');
 }
 </script>

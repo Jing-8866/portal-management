@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>系统门户管理平台</title>
+    <script>
+    (function () {
+        if (!localStorage.getItem('portal_token')) {
+            window.location.replace('login.html');
+        } else {
+            document.documentElement.classList.add('portal-ready');
+        }
+    })();
+    </script>
+    <style>html:not(.portal-ready) body { visibility: hidden; }</style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <style>

@@ -264,3 +264,255 @@ UNION
 SELECT ur.user_id, rs.subsystem_id, rs.permission_type, '角色继承' AS source
 FROM sys_role_subsystem rs
 INNER JOIN sys_user_role ur ON rs.role_id = ur.role_id;
+
+
+-- =============================================
+-- portal_order 升级: 商城订单子系统（追加执行）
+-- 商品、购物车、订单明细及订单表扩展
+-- =============================================
+USE portal_order;
+
+-- 商品表
+CREATE TABLE IF NOT EXISTS `biz_product` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '商品ID',
+    `name` VARCHAR(200) NOT NULL COMMENT '商品名称',
+    `description` TEXT COMMENT '商品描述',
+    `price` DECIMAL(12,2) NOT NULL DEFAULT 0.00 COMMENT '单价',
+    `stock` INT NOT NULL DEFAULT 0 COMMENT '库存',
+    `image_url` VARCHAR(500) DEFAULT NULL COMMENT '商品图片URL',
+    `category` VARCHAR(50) DEFAULT NULL COMMENT '分类',
+    `status` VARCHAR(20) NOT NULL DEFAULT 'on_shelf' COMMENT '状态: on_shelf/off_shelf',
+    `created_by` BIGINT DEFAULT NULL COMMENT '创建人ID',
+    `created_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    KEY `idx_status` (`status`),
+    KEY `idx_name` (`name`),
+    KEY `idx_category` (`category`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商品表';
+
+-- 购物车表
+CREATE TABLE IF NOT EXISTS `biz_cart_item` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '购物车项ID',
+    `user_id` BIGINT NOT NULL COMMENT '用户ID',
+    `product_id` BIGINT NOT NULL COMMENT '商品ID',
+    `quantity` INT NOT NULL DEFAULT 1 COMMENT '数量',
+    `created_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_user_product` (`user_id`, `product_id`),
+    KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='购物车表';
+
+-- 订单明细表
+CREATE TABLE IF NOT EXISTS `biz_order_item` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '明细ID',
+    `order_id` BIGINT NOT NULL COMMENT '订单ID',
+    `product_id` BIGINT NOT NULL COMMENT '商品ID',
+    `product_name` VARCHAR(200) NOT NULL COMMENT '商品名称快照',
+    `product_price` DECIMAL(12,2) NOT NULL COMMENT '单价快照',
+    `quantity` INT NOT NULL DEFAULT 1 COMMENT '数量',
+    `subtotal` DECIMAL(12,2) NOT NULL COMMENT '小计',
+    PRIMARY KEY (`id`),
+    KEY `idx_order_id` (`order_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单明细表';
+
+-- 扩展订单表（若列已存在请跳过对应 ALTER）
+ALTER TABLE `biz_order` ADD COLUMN `user_id` BIGINT DEFAULT NULL COMMENT '下单用户ID' AFTER `order_no`;
+ALTER TABLE `biz_order` ADD COLUMN `receiver_name` VARCHAR(100) DEFAULT NULL COMMENT '收货人' AFTER `customer_name`;
+ALTER TABLE `biz_order` ADD COLUMN `receiver_phone` VARCHAR(20) DEFAULT NULL COMMENT '收货电话' AFTER `receiver_name`;
+ALTER TABLE `biz_order` ADD COLUMN `receiver_address` VARCHAR(500) DEFAULT NULL COMMENT '收货地址' AFTER `receiver_phone`;
+ALTER TABLE `biz_order` ADD COLUMN `pay_time` DATETIME DEFAULT NULL COMMENT '支付时间' AFTER `remark`;
+ALTER TABLE `biz_order` ADD COLUMN `ship_time` DATETIME DEFAULT NULL COMMENT '发货时间' AFTER `pay_time`;
+ALTER TABLE `biz_order` ADD COLUMN `complete_time` DATETIME DEFAULT NULL COMMENT '完成时间' AFTER `ship_time`;
+ALTER TABLE `biz_order` ADD KEY `idx_user_id` (`user_id`);
+
+-- 商品示例数据
+INSERT INTO `biz_product` (`name`, `description`, `price`, `stock`, `category`, `status`, `created_by`) VALUES
+('无线鼠标', '人体工学设计，2.4G无线连接，续航12个月', 89.00, 200, '办公用品', 'on_shelf', 1),
+('机械键盘', '青轴机械键盘，RGB背光，全键无冲', 399.00, 80, '办公用品', 'on_shelf', 1),
+('27寸显示器', '2K IPS屏，75Hz刷新率，低蓝光护眼', 1299.00, 50, '电子设备', 'on_shelf', 1),
+('USB-C扩展坞', '七合一扩展坞，支持4K输出和PD充电', 199.00, 150, '电子设备', 'on_shelf', 1),
+('A4打印纸', '70g A4复印纸，500张/包', 25.00, 500, '办公用品', 'on_shelf', 1),
+('笔记本电脑支架', '铝合金折叠支架，可调节高度', 68.00, 120, '办公用品', 'on_shelf', 1),
+('降噪耳机', '主动降噪，40小时续航，蓝牙5.3', 599.00, 60, '电子设备', 'off_shelf', 1),
+('移动硬盘 1TB', 'USB3.0接口，轻薄便携', 459.00, 90, '电子设备', 'on_shelf', 1);
+
+-- 更新历史订单关联用户（示例）
+UPDATE `biz_order` SET `user_id` = `created_by` WHERE `user_id` IS NULL AND `created_by` IS NOT NULL;
+UPDATE `biz_order` SET `status` = 'completed' WHERE `status` = 'processing';
+
+
+-- =============================================
+-- portal_order 升级: 用户收货地址
+-- =============================================
+USE portal_order;
+
+CREATE TABLE IF NOT EXISTS `biz_user_address` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '地址ID',
+    `user_id` BIGINT NOT NULL COMMENT '用户ID',
+    `label` VARCHAR(50) DEFAULT NULL COMMENT '地址标签，如：家、公司',
+    `receiver_name` VARCHAR(100) NOT NULL COMMENT '收货人',
+    `receiver_phone` VARCHAR(20) NOT NULL COMMENT '联系电话',
+    `province` VARCHAR(50) DEFAULT NULL COMMENT '省',
+    `city` VARCHAR(50) DEFAULT NULL COMMENT '市',
+    `district` VARCHAR(50) DEFAULT NULL COMMENT '区/县',
+    `detail_address` VARCHAR(300) NOT NULL COMMENT '详细地址',
+    `is_default` TINYINT NOT NULL DEFAULT 0 COMMENT '是否默认: 0否 1是',
+    `created_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户收货地址表';
+
+
+-- =============================================
+-- portal_order 升级: 商品分类字典
+-- =============================================
+USE portal_order;
+
+CREATE TABLE IF NOT EXISTS `biz_product_category` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '分类ID',
+    `name` VARCHAR(50) NOT NULL COMMENT '分类名称',
+    `sort_order` INT NOT NULL DEFAULT 0 COMMENT '排序',
+    `created_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商品分类表';
+
+INSERT IGNORE INTO `biz_product_category` (`name`, `sort_order`) VALUES
+('办公用品', 1),
+('电子设备', 2),
+('学习用品', 3);
+
+-- 修正历史商品中不规范的分类
+UPDATE `biz_product` SET `category` = '电子设备'
+WHERE `category` IS NULL OR `category` = '' OR `category` NOT IN ('办公用品', '电子设备', '学习用品');
+UPDATE `biz_product` SET `category` = '电子设备'
+WHERE `name` LIKE '%U盘%' OR `name` LIKE '%硬盘%' OR `name` LIKE '%移动硬盘%';
+
+
+-- =============================================
+-- portal_order 升级: 订单物流轨迹表
+-- =============================================
+USE portal_order;
+
+CREATE TABLE IF NOT EXISTS `biz_order_logistics` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '轨迹ID',
+    `order_id` BIGINT NOT NULL COMMENT '订单ID',
+    `title` VARCHAR(100) NOT NULL COMMENT '节点标题',
+    `description` VARCHAR(500) DEFAULT NULL COMMENT '节点说明',
+    `location` VARCHAR(500) NOT NULL COMMENT '物流位置',
+    `event_time` DATETIME DEFAULT NULL COMMENT '发生时间（未发生节点为空）',
+    `state` VARCHAR(20) NOT NULL DEFAULT 'done' COMMENT '节点状态: done/active/wait/failed',
+    `sort_order` INT NOT NULL DEFAULT 0 COMMENT '排序序号',
+    `created_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    PRIMARY KEY (`id`),
+    KEY `idx_order_id` (`order_id`),
+    KEY `idx_order_sort` (`order_id`, `sort_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单物流轨迹表';
+
+-- 补充示例订单收货信息及物流时间节点（便于物流轨迹展示）
+UPDATE `biz_order` SET
+    `receiver_name` = `customer_name`,
+    `receiver_phone` = '13800001001',
+    `receiver_address` = '浙江省杭州市西湖区文三路478号华星科技大厦A座1201室',
+    `pay_time` = DATE_ADD(`created_time`, INTERVAL 15 MINUTE),
+    `ship_time` = DATE_ADD(`created_time`, INTERVAL 1 DAY),
+    `complete_time` = DATE_ADD(`created_time`, INTERVAL 2 DAY)
+WHERE `id` IN (1, 3, 4, 6, 8, 10) AND `status` = 'completed';
+
+UPDATE `biz_order` SET
+    `receiver_name` = `customer_name`,
+    `receiver_phone` = '13800001002',
+    `receiver_address` = '北京市海淀区中关村大街1号海龙大厦15层'
+WHERE `id` IN (2, 7, 9) AND `status` = 'pending';
+
+UPDATE `biz_order` SET
+    `receiver_name` = `customer_name`,
+    `receiver_phone` = '13800001003',
+    `receiver_address` = '广东省广州市天河区天河路228号广晟大厦8楼'
+WHERE `id` = 5 AND `status` = 'cancelled';
+
+-- 物流轨迹初始化数据（覆盖 order_id 1-10 的示例轨迹）
+DELETE FROM `biz_order_logistics` WHERE `order_id` BETWEEN 1 AND 10;
+
+-- 订单1 ORD-2024-001 已完成
+INSERT INTO `biz_order_logistics` (`order_id`, `title`, `description`, `location`, `event_time`, `state`, `sort_order`) VALUES
+(1, '提交订单', '订单已提交，等待付款', '上海市浦东新区华东仓储中心（金科路288号）', '2024-01-15 10:30:00', 'done', 1),
+(1, '付款成功', '买家已付款，等待发货', '上海市浦东新区华东仓储中心 · 备货区', '2024-01-15 10:45:00', 'done', 2),
+(1, '快件已揽收', '快递已从仓库发出', '上海市浦东新区华东揽收站（张江镇）', '2024-01-16 10:30:00', 'done', 3),
+(1, '运输中', '快件途经转运中心', '浙江省杭州市萧山转运中心', '2024-01-16 18:00:00', 'done', 4),
+(1, '到达派送站', '快件到达末端配送站', '杭州市配送站（西湖区）', '2024-01-17 08:30:00', 'done', 5),
+(1, '已签收', '买家已确认收货', '浙江省杭州市西湖区文三路478号华星科技大厦A座1201室', '2024-01-17 10:30:00', 'done', 6);
+
+-- 订单2 ORD-2024-002 待付款
+INSERT INTO `biz_order_logistics` (`order_id`, `title`, `description`, `location`, `event_time`, `state`, `sort_order`) VALUES
+(2, '提交订单', '订单已提交，等待付款', '上海市浦东新区华东仓储中心（金科路288号）', '2024-01-16 14:20:00', 'done', 1),
+(2, '待付款', '等待买家完成付款', '上海市浦东新区华东仓储中心 · 备货区', NULL, 'active', 2),
+(2, '商家发货', '等待商家发货', '上海市浦东新区华东仓储中心（金科路288号）', NULL, 'wait', 3),
+(2, '确认收货', '等待买家确认收货', '北京市海淀区中关村大街1号海龙大厦15层', NULL, 'wait', 4);
+
+-- 订单3 ORD-2024-003 已完成
+INSERT INTO `biz_order_logistics` (`order_id`, `title`, `description`, `location`, `event_time`, `state`, `sort_order`) VALUES
+(3, '提交订单', '订单已提交，等待付款', '上海市浦东新区华东仓储中心（金科路288号）', '2024-01-17 09:15:00', 'done', 1),
+(3, '付款成功', '买家已付款，等待发货', '上海市浦东新区华东仓储中心 · 备货区', '2024-01-17 09:30:00', 'done', 2),
+(3, '快件已揽收', '快递已从仓库发出', '上海市浦东新区华东揽收站（张江镇）', '2024-01-18 09:15:00', 'done', 3),
+(3, '运输中', '快件途经转运中心', '浙江省杭州市萧山转运中心', '2024-01-18 15:00:00', 'done', 4),
+(3, '到达派送站', '快件到达末端配送站', '杭州市配送站（西湖区）', '2024-01-19 08:00:00', 'done', 5),
+(3, '已签收', '买家已确认收货', '浙江省杭州市西湖区文三路478号华星科技大厦A座1201室', '2024-01-19 09:15:00', 'done', 6);
+
+-- 订单4 ORD-2024-004 已完成（大额服务器采购）
+INSERT INTO `biz_order_logistics` (`order_id`, `title`, `description`, `location`, `event_time`, `state`, `sort_order`) VALUES
+(4, '提交订单', '订单已提交，等待付款', '上海市浦东新区华东仓储中心（金科路288号）', '2024-01-18 11:00:00', 'done', 1),
+(4, '付款成功', '买家已付款，等待发货', '上海市浦东新区华东仓储中心 · 备货区', '2024-01-18 11:20:00', 'done', 2),
+(4, '快件已揽收', '快递已从仓库发出', '上海市浦东新区华东揽收站（张江镇）', '2024-01-19 11:00:00', 'done', 3),
+(4, '运输中', '快件途经转运中心', '上海市青浦区华新转运中心', '2024-01-19 20:00:00', 'done', 4),
+(4, '到达派送站', '快件到达末端配送站', '杭州市配送站（西湖区）', '2024-01-20 09:00:00', 'done', 5),
+(4, '已签收', '买家已确认收货', '浙江省杭州市西湖区文三路478号华星科技大厦A座1201室', '2024-01-20 11:00:00', 'done', 6);
+
+-- 订单5 ORD-2024-005 已取消
+INSERT INTO `biz_order_logistics` (`order_id`, `title`, `description`, `location`, `event_time`, `state`, `sort_order`) VALUES
+(5, '提交订单', '订单已提交，等待付款', '上海市浦东新区华东仓储中心（金科路288号）', '2024-01-19 16:45:00', 'done', 1),
+(5, '订单已取消', '未付款，订单已关闭', '上海市浦东新区华东仓储中心（金科路288号）', '2024-01-19 17:15:00', 'failed', 2);
+
+-- 订单6 ORD-2024-006 已完成
+INSERT INTO `biz_order_logistics` (`order_id`, `title`, `description`, `location`, `event_time`, `state`, `sort_order`) VALUES
+(6, '提交订单', '订单已提交，等待付款', '上海市浦东新区华东仓储中心（金科路288号）', '2024-01-20 08:30:00', 'done', 1),
+(6, '付款成功', '买家已付款，等待发货', '上海市浦东新区华东仓储中心 · 备货区', '2024-01-20 08:45:00', 'done', 2),
+(6, '快件已揽收', '快递已从仓库发出', '上海市浦东新区华东揽收站（张江镇）', '2024-01-21 08:30:00', 'done', 3),
+(6, '运输中', '快件途经转运中心', '浙江省杭州市萧山转运中心', '2024-01-21 16:00:00', 'done', 4),
+(6, '到达派送站', '快件到达末端配送站', '杭州市配送站（西湖区）', '2024-01-22 08:30:00', 'done', 5),
+(6, '已签收', '买家已确认收货', '浙江省杭州市西湖区文三路478号华星科技大厦A座1201室', '2024-01-22 08:30:00', 'done', 6);
+
+-- 订单7 ORD-2024-007 待付款
+INSERT INTO `biz_order_logistics` (`order_id`, `title`, `description`, `location`, `event_time`, `state`, `sort_order`) VALUES
+(7, '提交订单', '订单已提交，等待付款', '上海市浦东新区华东仓储中心（金科路288号）', '2024-01-21 13:00:00', 'done', 1),
+(7, '待付款', '等待买家完成付款', '上海市浦东新区华东仓储中心 · 备货区', NULL, 'active', 2),
+(7, '商家发货', '等待商家发货', '上海市浦东新区华东仓储中心（金科路288号）', NULL, 'wait', 3),
+(7, '确认收货', '等待买家确认收货', '北京市海淀区中关村大街1号海龙大厦15层', NULL, 'wait', 4);
+
+-- 订单8 ORD-2024-008 已完成
+INSERT INTO `biz_order_logistics` (`order_id`, `title`, `description`, `location`, `event_time`, `state`, `sort_order`) VALUES
+(8, '提交订单', '订单已提交，等待付款', '上海市浦东新区华东仓储中心（金科路288号）', '2024-01-22 15:30:00', 'done', 1),
+(8, '付款成功', '买家已付款，等待发货', '上海市浦东新区华东仓储中心 · 备货区', '2024-01-22 15:45:00', 'done', 2),
+(8, '快件已揽收', '快递已从仓库发出', '上海市浦东新区华东揽收站（张江镇）', '2024-01-23 15:30:00', 'done', 3),
+(8, '运输中', '快件途经转运中心', '浙江省杭州市萧山转运中心', '2024-01-23 22:00:00', 'done', 4),
+(8, '到达派送站', '快件到达末端配送站', '杭州市配送站（西湖区）', '2024-01-24 09:00:00', 'done', 5),
+(8, '已签收', '买家已确认收货', '浙江省杭州市西湖区文三路478号华星科技大厦A座1201室', '2024-01-24 15:30:00', 'done', 6);
+
+-- 订单9 ORD-2024-009 待付款
+INSERT INTO `biz_order_logistics` (`order_id`, `title`, `description`, `location`, `event_time`, `state`, `sort_order`) VALUES
+(9, '提交订单', '订单已提交，等待付款', '上海市浦东新区华东仓储中心（金科路288号）', '2024-01-23 10:00:00', 'done', 1),
+(9, '待付款', '等待买家完成付款', '上海市浦东新区华东仓储中心 · 备货区', NULL, 'active', 2),
+(9, '商家发货', '等待商家发货', '上海市浦东新区华东仓储中心（金科路288号）', NULL, 'wait', 3),
+(9, '确认收货', '等待买家确认收货', '北京市海淀区中关村大街1号海龙大厦15层', NULL, 'wait', 4);
+
+-- 订单10 ORD-2024-010 已完成
+INSERT INTO `biz_order_logistics` (`order_id`, `title`, `description`, `location`, `event_time`, `state`, `sort_order`) VALUES
+(10, '提交订单', '订单已提交，等待付款', '上海市浦东新区华东仓储中心（金科路288号）', '2024-01-24 09:00:00', 'done', 1),
+(10, '付款成功', '买家已付款，等待发货', '上海市浦东新区华东仓储中心 · 备货区', '2024-01-24 09:15:00', 'done', 2),
+(10, '快件已揽收', '快递已从仓库发出', '上海市浦东新区华东揽收站（张江镇）', '2024-01-25 09:00:00', 'done', 3),
+(10, '运输中', '快件途经转运中心', '浙江省杭州市萧山转运中心', '2024-01-25 17:00:00', 'done', 4),
+(10, '到达派送站', '快件到达末端配送站', '杭州市配送站（西湖区）', '2024-01-26 08:00:00', 'done', 5),
+(10, '已签收', '买家已确认收货', '浙江省杭州市西湖区文三路478号华星科技大厦A座1201室', '2024-01-26 09:00:00', 'done', 6);

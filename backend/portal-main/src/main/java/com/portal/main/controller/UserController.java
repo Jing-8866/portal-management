@@ -1,6 +1,5 @@
 package com.portal.main.controller;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.portal.common.annotation.OperationLog;
 import com.portal.common.dto.ApiResult;
 import com.portal.common.model.SysUser;
@@ -26,13 +25,11 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','SUBSYSTEM_ADMIN')")
-    public ApiResult<Page<SysUser>> getUserList(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size,
+    public ApiResult<List<SysUser>> getUserList(
             @RequestParam(required = false) String keyword) {
-        Page<SysUser> result = userService.getUserList(page, size, keyword);
-        result.getRecords().forEach(u -> u.setPassword(null));
-        return ApiResult.success(result);
+        List<SysUser> users = userService.getUserList(keyword);
+        users.forEach(u -> u.setPassword(null));
+        return ApiResult.success(users);
     }
 
     @GetMapping("/stats")

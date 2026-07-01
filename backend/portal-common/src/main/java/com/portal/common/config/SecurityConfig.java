@@ -36,6 +36,7 @@ public class SecurityConfig {
             .and()
             .authorizeRequests()
             .antMatchers("/api/auth/login", "/api/auth/register").permitAll()
+            .antMatchers("/uploads/**").permitAll()
             .anyRequest().authenticated()
             .and()
             // 未认证返回JSON 401

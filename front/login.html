@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>系统门户管理平台 - 登录</title>
+    <script>
+    if (localStorage.getItem('portal_token')) {
+        window.location.replace('index.html');
+    }
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -81,7 +86,7 @@
     <script>
         // 已登录跳转
         if (isLoggedIn()) {
-            window.location.href = 'index.html';
+            window.location.replace('index.html');
         }
 
         async function handleLogin(e) {
@@ -114,7 +119,7 @@
                     setToken(res.token);
                     var userInfo = { userId: res.userId, username: res.username, realName: res.realName, roleCode: res.roleCode };
                     setCurrentUser(userInfo);
-                    window.location.href = 'index.html';
+                    window.location.replace('index.html');
                 } else {
                     errEl.textContent = '登录失败';
                     errEl.style.display = 'block';

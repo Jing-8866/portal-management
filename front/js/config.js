@@ -48,7 +48,7 @@ async function request(url, options = {}) {
         if (resp.status === 401) {
             clearAuth();
             const loginPath = window.location.pathname.includes('/systems/') ? '../../login.html' : 'login.html';
-            window.location.href = loginPath;
+            window.location.replace(loginPath);
             return null;
         }
         if (resp.status === 403) {
@@ -366,5 +366,5 @@ function formatTime(str){
 function handleLogout() {
     clearAuth();
     var loginPath = window.location.pathname.includes('/systems/') ? '../../login.html' : 'login.html';
-    window.location.href = loginPath;
+    window.location.replace(loginPath);
 }

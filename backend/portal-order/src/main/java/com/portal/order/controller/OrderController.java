@@ -1,13 +1,14 @@
 package com.portal.order.controller;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.portal.common.annotation.OperationLog;
 import com.portal.common.dto.ApiResult;
+import com.portal.order.dto.CheckoutRequest;
+import com.portal.order.dto.OrderDetailVO;
 import com.portal.order.model.BizOrder;
 import com.portal.order.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 import java.util.Map;
 
@@ -18,17 +19,24 @@ public class OrderController {
     private OrderService orderService;
 
     @GetMapping
-    public ApiResult<Page<BizOrder>> getOrderList(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size,
+    public ApiResult<List<BizOrder>> getOrderList(
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String status) {
-        return ApiResult.success(orderService.getOrderList(page, size, keyword, status));
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            @RequestParam(defaultValue = "mine") String scope) {
+        return ApiResult.success(orderService.getOrderList(keyword, status, startDate, endDate, scope));
     }
 
     @GetMapping("/stats")
-    public ApiResult<Map<String, Object>> getOrderStats() {
-        return ApiResult.success(orderService.getOrderStats());
+    public ApiResult<Map<String, Object>> getOrderStats(
+            @RequestParam(defaultValue = "mine") String scope) {
+        return ApiResult.success(orderService.getOrderStats(scope));
+    }
+
+    @GetMapping("/settings")
+    public ApiResult<Map<String, Object>> getOrderSettings() {
+        return ApiResult.success(orderService.getOrderSettings());
     }
 
     @GetMapping("/trend")
@@ -42,21 +50,41 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    public ApiResult<BizOrder> getOrderById(@PathVariable Long id) {
-        return ApiResult.success(orderService.getOrderById(id));
+    public ApiResult<OrderDetailVO> getOrderById(@PathVariable Long id) {
+        try {
+            return ApiResult.success(orderService.getOrderDetail(id));
+        } catch (RuntimeException e) {
+            return ApiResult.error(e.getMessage());
+        }
     }
 
-    @PostMapping
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','SUBSYSTEM_ADMIN')")
-    @OperationLog(value = "\u521b\u5efa\u8ba2\u5355", subsystem = "ORDER_MGMT")
-    public ApiResult<Boolean> createOrder(@RequestBody BizOrder order) {
-        return ApiResult.success(orderService.createOrder(order));
+    @PostMapping("/checkout")
+    @OperationLog(value = "提交订单", subsystem = "ORDER_MGMT")
+    public ApiResult<Boolean> checkout(@RequestBody CheckoutRequest request) {
+        try {
+            return ApiResult.success(orderService.checkout(request));
+        } catch (RuntimeException e) {
+            return ApiResult.error(e.getMessage());
+        }
     }
 
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','SUBSYSTEM_ADMIN')")
-    @OperationLog(value = "\u53d8\u66f4\u8ba2\u5355\u72b6\u6001", subsystem = "ORDER_MGMT")
+    @OperationLog(value = "变更订单状态", subsystem = "ORDER_MGMT")
     public ApiResult<Boolean> updateStatus(@PathVariable Long id, @RequestParam String status) {
-        return ApiResult.success(orderService.updateOrderStatus(id, status));
+        try {
+            return ApiResult.success(orderService.updateOrderStatus(id, status));
+        } catch (RuntimeException e) {
+            return ApiResult.error(e.getMessage());
+        }
+    }
+
+    @PostMapping("/{id}/reorder-to-cart")
+    @OperationLog(value = "重新加入购物车", subsystem = "ORDER_MGMT")
+    public ApiResult<Map<String, Object>> reorderToCart(@PathVariable Long id) {
+        try {
+            return ApiResult.success(orderService.reorderToCart(id));
+        } catch (RuntimeException e) {
+            return ApiResult.error(e.getMessage());
+        }
     }
 }

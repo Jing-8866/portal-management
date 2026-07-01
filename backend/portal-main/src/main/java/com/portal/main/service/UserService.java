@@ -2,7 +2,6 @@ package com.portal.main.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.portal.common.model.*;
 import com.portal.main.dto.UserDetailVO;
 import com.portal.main.dto.UserCreateRequest;
@@ -22,8 +21,7 @@ public class UserService {
     @Autowired private SysUserSubsystemMapper userSubsystemMapper;
     @Autowired private SysSubsystemMapper subsystemMapper;
 
-    public Page<SysUser> getUserList(int page, int size, String keyword) {
-        Page<SysUser> pageParam = new Page<>(page, size);
+    public List<SysUser> getUserList(String keyword) {
         LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
         if (StringUtils.hasText(keyword)) {
             wrapper.like(SysUser::getUsername, keyword)
@@ -31,7 +29,7 @@ public class UserService {
                     .or().like(SysUser::getEmail, keyword);
         }
         wrapper.orderByAsc(SysUser::getId);
-        return userMapper.selectPage(pageParam, wrapper);
+        return userMapper.selectList(wrapper);
     }
 
     public SysUser getUserById(Long id) { return userMapper.selectById(id); }
