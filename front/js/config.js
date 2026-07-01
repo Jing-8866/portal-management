@@ -5,6 +5,14 @@ const CONFIG = {
     USER_KEY: 'portal_user'
 };
 
+/** 子系统编码常量 */
+const SUBSYSTEM_CODE = {
+    USER_MGMT: 'USER_MGMT',
+    ORDER_MGMT: 'ORDER_MGMT',
+    DB_MGMT: 'DB_MGMT',
+    LOG_ANALYSIS: 'LOG_ANALYSIS'
+};
+
 // Token管理
 function getToken() {
     return localStorage.getItem(CONFIG.TOKEN_KEY);
@@ -26,10 +34,61 @@ function clearAuth() {
 function isLoggedIn() {
     return !!getToken();
 }
+function isPlatformAdmin() {
+    const user = getCurrentUser();
+    return user && user.roleCode === 'PLATFORM_ADMIN';
+}
+
+/** 是否对指定子系统拥有 login 入口权限（admin 隐含入口） */
+function hasSubsystemLogin(subsystemCode) {
+    const user = getCurrentUser();
+    if (!user) return false;
+    if (user.roleCode === 'PLATFORM_ADMIN') return true;
+    const loginCodes = user.loginSubsystemCodes || [];
+    const adminCodes = user.adminSubsystemCodes || [];
+    return loginCodes.indexOf(subsystemCode) >= 0 || adminCodes.indexOf(subsystemCode) >= 0;
+}
+
+/** 是否对指定子系统拥有 query 查询权限（admin 隐含查询） */
+function hasSubsystemQuery(subsystemCode) {
+    const user = getCurrentUser();
+    if (!user) return false;
+    if (user.roleCode === 'PLATFORM_ADMIN') return true;
+    const queryCodes = user.querySubsystemCodes || [];
+    const adminCodes = user.adminSubsystemCodes || [];
+    return queryCodes.indexOf(subsystemCode) >= 0 || adminCodes.indexOf(subsystemCode) >= 0;
+}
+
+/** 是否对指定子系统拥有 admin 管理权限 */
+function hasSubsystemAdmin(subsystemCode) {
+    const user = getCurrentUser();
+    if (!user) return false;
+    if (user.roleCode === 'PLATFORM_ADMIN') return true;
+    const codes = user.adminSubsystemCodes || [];
+    return codes.indexOf(subsystemCode) >= 0;
+}
+
+/** 是否对任一子系统拥有 admin 权限（兼容旧逻辑） */
 function isAdmin() {
     const user = getCurrentUser();
     if (!user) return false;
-    return user.roleCode === 'PLATFORM_ADMIN' || user.roleCode === 'SUBSYSTEM_ADMIN';
+    if (user.roleCode === 'PLATFORM_ADMIN') return true;
+    return (user.adminSubsystemCodes || []).length > 0;
+}
+
+/** 进入子系统前校验 login 入口权限 */
+function assertSubsystemLogin(subsystemCode, homePath) {
+    homePath = homePath || (window.location.pathname.includes('/systems/') ? '../../index.html' : 'index.html');
+    if (!isLoggedIn()) {
+        window.location.href = window.location.pathname.includes('/systems/') ? '../../login.html' : 'login.html';
+        return false;
+    }
+    if (!hasSubsystemLogin(subsystemCode)) {
+        showToast('无权进入该子系统', 'error');
+        setTimeout(function () { window.location.href = homePath; }, 800);
+        return false;
+    }
+    return true;
 }
 
 // 统一请求方法

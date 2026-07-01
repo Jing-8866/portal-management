@@ -29,15 +29,8 @@ public class OrderLogisticsService {
     @Autowired
     private BizOrderLogisticsMapper logisticsMapper;
 
-    /** 下单后初始化物流轨迹 */
+    /** 下单后不写入物流，付款后再展示 */
     public void initOnCheckout(BizOrder order) {
-        if (order == null || order.getId() == null) {
-            return;
-        }
-        LocalDateTime created = order.getCreatedTime() != null ? order.getCreatedTime() : LocalDateTime.now();
-        int sort = 1;
-        insertTrace(order.getId(), "提交订单", "订单已提交，等待付款", WAREHOUSE, created, "done", sort++);
-        appendPreviewNodes(order, sort);
     }
 
     /** 订单状态变更后追加/更新物流轨迹 */
@@ -45,11 +38,20 @@ public class OrderLogisticsService {
         if (order == null || order.getId() == null) {
             return;
         }
+        if ("cancelled".equals(toStatus) && order.getPayTime() == null) {
+            logisticsMapper.delete(
+                    new LambdaQueryWrapper<BizOrderLogistics>().eq(BizOrderLogistics::getOrderId, order.getId()));
+            return;
+        }
         LocalDateTime time = eventTime != null ? eventTime : LocalDateTime.now();
         clearPreviewNodes(order.getId());
 
         switch (toStatus) {
             case "paid":
+                if (listByOrderId(order.getId()).isEmpty()) {
+                    LocalDateTime created = order.getCreatedTime() != null ? order.getCreatedTime() : time;
+                    insertTrace(order.getId(), "提交订单", "订单已提交，等待付款", WAREHOUSE, created, "done", 1);
+                }
                 appendEvent(order, "付款成功", "买家已付款，等待发货", WAREHOUSE_PREP, time, "done");
                 break;
             case "cancelled":
@@ -83,9 +85,12 @@ public class OrderLogisticsService {
         appendPreviewNodes(order, nextSortOrder(order.getId()));
     }
 
-    /** 查询订单物流时间线（无记录时按订单历史回填） */
+    /** 查询订单物流时间线（付款前不返回） */
     public List<OrderLogisticsTraceVO> getTimeline(BizOrder order) {
         if (order == null || order.getId() == null) {
+            return new ArrayList<>();
+        }
+        if (!shouldExposeLogistics(order)) {
             return new ArrayList<>();
         }
         List<BizOrderLogistics> records = listByOrderId(order.getId());
@@ -94,6 +99,13 @@ public class OrderLogisticsService {
             records = listByOrderId(order.getId());
         }
         return records.stream().map(this::toVO).collect(Collectors.toList());
+    }
+
+    private boolean shouldExposeLogistics(BizOrder order) {
+        if ("pending".equals(order.getStatus())) {
+            return false;
+        }
+        return !("cancelled".equals(order.getStatus()) && order.getPayTime() == null);
     }
 
     private List<BizOrderLogistics> listByOrderId(Long orderId) {

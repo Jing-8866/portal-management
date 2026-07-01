@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.portal.common.dto.*;
 import com.portal.common.model.*;
 import com.portal.common.util.JwtUtil;
+import com.portal.common.util.PlatformAdminUser;
 import com.portal.main.mapper.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,6 +19,8 @@ public class AuthService {
     @Autowired private SysRoleMapper roleMapper;
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private JwtUtil jwtUtil;
+    @Autowired private SysSubsystemMapper subsystemMapper;
+    @Autowired private SubsystemPermissionService subsystemPermissionService;
 
     public LoginResponse login(LoginRequest request) {
         SysUser user = userMapper.selectOne(new LambdaQueryWrapper<SysUser>().eq(SysUser::getUsername, request.getUsername()));
@@ -61,11 +64,26 @@ public class AuthService {
             }
         }
         String token = jwtUtil.generateToken(user.getId(), user.getUsername(), roleCode);
-        return new LoginResponse(token, user.getId(), user.getUsername(), user.getRealName(), roleCode);
+        java.util.List<String> adminCodes = subsystemPermissionService.getAdminSubsystemCodes(user.getId());
+        java.util.List<String> loginCodes = subsystemPermissionService.getLoginSubsystemCodes(user.getId());
+        java.util.List<String> queryCodes = subsystemPermissionService.getQuerySubsystemCodes(user.getId());
+        LoginResponse response = new LoginResponse();
+        response.setToken(token);
+        response.setUserId(user.getId());
+        response.setUsername(user.getUsername());
+        response.setRealName(user.getRealName());
+        response.setRoleCode(roleCode);
+        response.setAdminSubsystemCodes(adminCodes);
+        response.setLoginSubsystemCodes(loginCodes);
+        response.setQuerySubsystemCodes(queryCodes);
+        return response;
     }
 
     @Transactional
     public SysUser register(UserCreateRequest request) {
+        if (PlatformAdminUser.isProtectedUsername(request.getUsername())) {
+            throw new RuntimeException("系统管理员账号不可注册");
+        }
         SysUser existUser = userMapper.selectOne(new LambdaQueryWrapper<SysUser>().eq(SysUser::getUsername, request.getUsername()));
         if (existUser != null) throw new RuntimeException("用户名已存在");
 

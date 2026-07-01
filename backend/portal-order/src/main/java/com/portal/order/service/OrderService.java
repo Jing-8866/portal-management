@@ -32,6 +32,8 @@ public class OrderService {
     private AddressService addressService;
     @Autowired
     private OrderLogisticsService orderLogisticsService;
+    @Autowired
+    private BizOrderLogisticsMapper orderLogisticsMapper;
 
     @Value("${order.payment-timeout-minutes:30}")
     private int paymentTimeoutMinutes;
@@ -39,7 +41,7 @@ public class OrderService {
     public List<BizOrder> getOrderList(String keyword, String status,
                                        String startDate, String endDate, String scope) {
         LambdaQueryWrapper<BizOrder> wrapper = buildOrderQuery(keyword, status, startDate, endDate);
-        boolean viewAll = "all".equals(scope) && OrderSecurityHelper.isAdmin();
+        boolean viewAll = "all".equals(scope) && OrderSecurityHelper.isOrderAdmin();
         if (!viewAll) {
             wrapper.eq(BizOrder::getUserId, OrderSecurityHelper.getCurrentUserId());
         }
@@ -68,7 +70,7 @@ public class OrderService {
     }
 
     public Map<String, Object> getOrderStats(String scope) {
-        if ("all".equals(scope) && OrderSecurityHelper.isAdmin()) {
+        if ("all".equals(scope) && OrderSecurityHelper.isOrderAdmin()) {
             return orderMapper.getOrderStats();
         }
         Long userId = OrderSecurityHelper.getCurrentUserId();
@@ -114,7 +116,7 @@ public class OrderService {
         if (order == null) throw new RuntimeException("订单不存在");
         expireOrderIfNeeded(order);
         order = orderMapper.selectById(id);
-        if (!OrderSecurityHelper.isAdmin()) {
+        if (!OrderSecurityHelper.isOrderAdmin()) {
             Long userId = OrderSecurityHelper.getCurrentUserId();
             if (order.getUserId() == null || !order.getUserId().equals(userId)) {
                 throw new RuntimeException("无权查看该订单");
@@ -245,7 +247,7 @@ public class OrderService {
     public boolean updateOrderStatus(Long id, String newStatus) {
         BizOrder order = getOrderWithAccess(id);
         String current = order.getStatus();
-        boolean admin = OrderSecurityHelper.isAdmin();
+        boolean admin = OrderSecurityHelper.isOrderAdmin();
 
         if ("paid".equals(newStatus) && "cancelled".equals(current)) {
             throw new RuntimeException("订单已超时自动取消，请重新下单");
@@ -263,7 +265,7 @@ public class OrderService {
         if ("cancelled".equals(newStatus) && "pending".equals(current)) {
             restoreStock(id);
         }
-        if ("refunded".equals(newStatus)) {
+        if ("refunded".equals(newStatus) || "returned".equals(newStatus)) {
             restoreStock(id);
         }
 
@@ -391,9 +393,34 @@ public class OrderService {
             throw new RuntimeException(String.join("；", skipped));
         }
 
+        deleteOrderData(orderId);
+
         Map<String, Object> result = new HashMap<>();
         result.put("addedCount", addedCount);
         result.put("skipped", skipped);
+        result.put("deletedOrderId", orderId);
         return result;
+    }
+
+    private static final Set<String> DELETABLE_STATUSES = new HashSet<>(
+            Arrays.asList("cancelled", "completed", "refunded", "returned"));
+
+    /**
+     * 删除已结束的订单（仅订单所属用户或订单管理员可操作）。
+     */
+    @Transactional(transactionManager = "orderTransactionManager")
+    public boolean deleteOrder(Long orderId) {
+        BizOrder order = getOrderWithAccess(orderId);
+        if (!DELETABLE_STATUSES.contains(order.getStatus())) {
+            throw new RuntimeException("当前状态的订单不可删除");
+        }
+        deleteOrderData(orderId);
+        return true;
+    }
+
+    private void deleteOrderData(Long orderId) {
+        orderItemMapper.delete(new LambdaQueryWrapper<BizOrderItem>().eq(BizOrderItem::getOrderId, orderId));
+        orderLogisticsMapper.delete(new LambdaQueryWrapper<BizOrderLogistics>().eq(BizOrderLogistics::getOrderId, orderId));
+        orderMapper.deleteById(orderId);
     }
 }

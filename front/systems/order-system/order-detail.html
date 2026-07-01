@@ -19,6 +19,12 @@
         .items-table th, .items-table td { padding:10px 12px; border-bottom:1px solid #f0f0f0; text-align:left; font-size:14px; }
         .items-table th { background:#f8fafc; color:#64748b; }
         .logistics-section { margin-top:28px; padding-top:24px; border-top:1px solid #f0f0f0; }
+        .logistics-link { background:none; border:none; color:#3B82F6; font-size:13px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; padding:0; margin-top:12px; }
+        .logistics-link:hover { color:#2563EB; }
+        .logistics-timeline-summary { margin-bottom:0; }
+        .logistics-timeline-summary .logistics-step { padding-bottom:0; }
+        .logistics-modal { max-width:560px; }
+        .logistics-modal .modal-body { max-height:70vh; overflow-y:auto; }
         .logistics-title { font-size:16px; font-weight:600; margin-bottom:20px; color:#334155; display:flex; align-items:center; gap:8px; }
         .logistics-title i { color:#F59E0B; }
         .logistics-timeline { padding-left:4px; }
@@ -58,6 +64,19 @@
         </div>
     </div>
 </div>
+
+<div class="modal-overlay" id="logisticsModal" style="display:none;" onclick="if(event.target===this)closeLogisticsModal()">
+    <div class="modal-box logistics-modal">
+        <div class="modal-header">
+            <h3 style="font-size:16px;font-weight:600;display:flex;align-items:center;gap:8px;margin:0;">
+                <i class="fas fa-truck" style="color:#F59E0B;"></i> 完整物流信息
+            </h3>
+            <button type="button" onclick="closeLogisticsModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="logisticsModalBody"></div>
+    </div>
+</div>
+
 <script src="../../js/config.js"></script>
 <script src="js/order-common.js"></script>
 <script>
@@ -111,7 +130,7 @@ async function loadDetail() {
 function buildActionBar(order) {
     var html = '<div class="action-bar">';
     var s = order.status;
-    var admin = isAdmin();
+    var admin = hasSubsystemAdmin(SUBSYSTEM_CODE.ORDER_MGMT);
 
     if (s === 'pending' && !admin) {
         html += btn('paid', '模拟付款', 'btn-primary');

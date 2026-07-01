@@ -85,7 +85,7 @@
 var allUsers = [], filteredUsers = [], userPage = 1, userPageSize = 10, searchTimer = null;
 
 document.addEventListener('DOMContentLoaded', function() {
-    if (!isLoggedIn()) { window.location.href = '../../login.html'; return; }
+    if (!assertSubsystemLogin(SUBSYSTEM_CODE.USER_MGMT)) return;
     initUserDropdown(); clearSearchInputs(); highlightNav(); loadUsers();
 });
 

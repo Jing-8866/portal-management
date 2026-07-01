@@ -23,7 +23,7 @@ function renderCards(systems) {
     let html = '';
     systems.forEach(function(sys) {
         const disabled = sys.status === 0 ? 'disabled' : '';
-        const actionsHtml = isAdmin() ? '<div class="card-actions">' +
+        const actionsHtml = isPlatformAdmin() ? '<div class="card-actions">' +
             '<button class="btn-edit" title="编辑" onclick="event.stopPropagation();editSubsystem('+sys.id+')"><i class="fas fa-pen"></i></button>' +
             '<button class="btn-toggle" title="'+(sys.status===1?'停用':'启用')+'" onclick="event.stopPropagation();toggleSubsystemStatus('+sys.id+','+sys.status+')"><i class="fas fa-'+(sys.status===1?'ban':'check')+'"></i></button>' +
             '<button class="btn-del" title="删除" onclick="event.stopPropagation();deleteSubsystem('+sys.id+')"><i class="fas fa-trash"></i></button>' +
@@ -34,7 +34,7 @@ function renderCards(systems) {
             '<h3>' + (sys.systemName || sys.name || '') + '</h3>' +
             '<p>' + (sys.description || '暂无描述') + '</p></div>';
     });
-    if (isAdmin()) {
+    if (isPlatformAdmin()) {
         html += '<div class="system-card add-card" onclick="openAddModal()"><i class="fas fa-plus"></i><span>新增子系统</span></div>';
     }
     grid.innerHTML = html;

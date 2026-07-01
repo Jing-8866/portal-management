@@ -6,7 +6,7 @@ let userPageSize = 10;
 let selectedIds = [];
 
 document.addEventListener('DOMContentLoaded', function() {
-    if (!isLoggedIn()) { window.location.href = '../../login.html'; return; }
+    if (!assertSubsystemLogin(SUBSYSTEM_CODE.USER_MGMT)) return;
     initUserDropdown(); clearSearchInputs();
     highlightNav();
     loadStats();
@@ -24,7 +24,7 @@ function highlightNav() {
 }
 
 function renderAdminBtns() {
-    if (!isAdmin()) return;
+    if (!hasSubsystemAdmin(SUBSYSTEM_CODE.USER_MGMT)) return;
     document.getElementById('adminBtns').innerHTML =
         '<button class="btn btn-primary" onclick="openAddModal()"><i class="fas fa-plus"></i> 添加用户</button>' +
         '<button class="btn btn-secondary" onclick="exportUsers()"><i class="fas fa-download"></i> 导出</button>' +
@@ -81,7 +81,7 @@ function renderTable() {
                 ? '<span class="status-badge status-active">启用</span>'
                 : '<span class="status-badge status-inactive">停用</span>';
             var actions = '';
-            if (isAdmin()) {
+            if (hasSubsystemAdmin(SUBSYSTEM_CODE.USER_MGMT)) {
                 actions = '<button class="btn btn-sm btn-primary" onclick="openEditUser(' + u.id + ')">编辑</button> ' +
                     '<button class="btn btn-sm btn-danger" onclick="deleteUser(' + u.id + ')">删除</button> ' +
                     '<button class="btn btn-sm btn-secondary" onclick="openResetPwd(' + u.id + ')">修改密码</button> ';

@@ -3,6 +3,7 @@ package com.portal.main.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.portal.common.model.*;
+import com.portal.common.util.PlatformAdminUser;
 import com.portal.main.dto.UserDetailVO;
 import com.portal.main.dto.UserCreateRequest;
 import com.portal.main.dto.UserUpdateRequest;
@@ -22,11 +23,11 @@ public class UserService {
     @Autowired private SysSubsystemMapper subsystemMapper;
 
     public List<SysUser> getUserList(String keyword) {
-        LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
+        LambdaQueryWrapper<SysUser> wrapper = excludeProtectedAdmin(new LambdaQueryWrapper<>());
         if (StringUtils.hasText(keyword)) {
-            wrapper.like(SysUser::getUsername, keyword)
+            wrapper.and(w -> w.like(SysUser::getUsername, keyword)
                     .or().like(SysUser::getRealName, keyword)
-                    .or().like(SysUser::getEmail, keyword);
+                    .or().like(SysUser::getEmail, keyword));
         }
         wrapper.orderByAsc(SysUser::getId);
         return userMapper.selectList(wrapper);
@@ -86,6 +87,9 @@ public class UserService {
             throw new RuntimeException("用户名不能为空");
         }
         String username = request.getUsername().trim();
+        if (PlatformAdminUser.isProtectedUsername(username)) {
+            throw new RuntimeException("系统管理员账号不可通过管理功能创建");
+        }
         SysUser exists = userMapper.selectOne(new LambdaQueryWrapper<SysUser>().eq(SysUser::getUsername, username));
         if (exists != null) {
             throw new RuntimeException("用户名已存在");
@@ -108,6 +112,7 @@ public class UserService {
      */
     @Transactional
     public boolean updateUserWithRole(Long id, UserUpdateRequest request) {
+        assertNotProtectedPlatformAdmin(id);
         // 更新基本信息
         LambdaUpdateWrapper<SysUser> wrapper = new LambdaUpdateWrapper<>();
         wrapper.eq(SysUser::getId, id);
@@ -159,16 +164,20 @@ public class UserService {
         return userMapper.update(null, wrapper) > 0;
     }
 
-    public boolean deleteUser(Long id) { return userMapper.deleteById(id) > 0; }
+    public boolean deleteUser(Long id) {
+        assertNotProtectedPlatformAdmin(id);
+        return userMapper.deleteById(id) > 0;
+    }
 
     public boolean updateStatus(Long id, Integer status) {
+        assertNotProtectedPlatformAdmin(id);
         LambdaUpdateWrapper<SysUser> wrapper = new LambdaUpdateWrapper<>();
         wrapper.eq(SysUser::getId, id).set(SysUser::getStatus, status);
         return userMapper.update(null, wrapper) > 0;
     }
 
     public List<SysUser> getAllUsers() {
-        return userMapper.selectList(new LambdaQueryWrapper<SysUser>().orderByAsc(SysUser::getId));
+        return userMapper.selectList(excludeProtectedAdmin(new LambdaQueryWrapper<SysUser>()).orderByAsc(SysUser::getId));
     }
 
     public List<SysUser> getUsersWithoutPermission(String keyword) {
@@ -179,6 +188,7 @@ public class UserService {
     }
 
     public boolean changePassword(Long id, String newPassword) {
+        assertNotProtectedPlatformAdmin(id);
         SysUser user = userMapper.selectById(id);
         if (user == null) return false;
         LambdaUpdateWrapper<SysUser> wrapper = new LambdaUpdateWrapper<>();
@@ -188,8 +198,9 @@ public class UserService {
     }
 
     public java.util.Map<String, Object> getUserStats() {
-        long total = userMapper.selectCount(null);
-        long enabled = userMapper.selectCount(new LambdaQueryWrapper<SysUser>().eq(SysUser::getStatus, 1));
+        LambdaQueryWrapper<SysUser> base = excludeProtectedAdmin(new LambdaQueryWrapper<>());
+        long total = userMapper.selectCount(base);
+        long enabled = userMapper.selectCount(excludeProtectedAdmin(new LambdaQueryWrapper<SysUser>()).eq(SysUser::getStatus, 1));
         long disabled = total - enabled;
         java.util.Map<String, Object> stats = new java.util.HashMap<>();
         stats.put("total", total);
@@ -201,5 +212,29 @@ public class UserService {
     public java.util.List<SysUserRole> getUserRoleList(Long userId) {
         return userRoleMapper.selectList(
             new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getUserId, userId));
+    }
+
+    public boolean isProtectedPlatformAdmin(Long userId) {
+        if (userId == null) {
+            return false;
+        }
+        SysUser user = userMapper.selectById(userId);
+        return PlatformAdminUser.isProtectedUser(user);
+    }
+
+    public Long getProtectedPlatformAdminUserId() {
+        SysUser user = userMapper.selectOne(
+            new LambdaQueryWrapper<SysUser>().eq(SysUser::getUsername, PlatformAdminUser.USERNAME));
+        return user != null ? user.getId() : null;
+    }
+
+    public void assertNotProtectedPlatformAdmin(Long userId) {
+        if (isProtectedPlatformAdmin(userId)) {
+            throw new RuntimeException("系统管理员账号不允许通过管理功能修改");
+        }
+    }
+
+    private LambdaQueryWrapper<SysUser> excludeProtectedAdmin(LambdaQueryWrapper<SysUser> wrapper) {
+        return wrapper.ne(SysUser::getUsername, PlatformAdminUser.USERNAME);
     }
 }

@@ -24,7 +24,7 @@ public class UserController {
     private UserExcelService userExcelService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','SUBSYSTEM_ADMIN')")
+    @PreAuthorize("@subsystemAuth.hasAdmin('USER_MGMT')")
     public ApiResult<List<SysUser>> getUserList(
             @RequestParam(required = false) String keyword) {
         List<SysUser> users = userService.getUserList(keyword);
@@ -33,12 +33,13 @@ public class UserController {
     }
 
     @GetMapping("/stats")
+    @PreAuthorize("@subsystemAuth.hasQuery('USER_MGMT')")
     public ApiResult<java.util.Map<String, Object>> getUserStats() {
         return ApiResult.success(userService.getUserStats());
     }
 
     @GetMapping("/all")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','SUBSYSTEM_ADMIN')")
+    @PreAuthorize("@subsystemAuth.hasAdmin('USER_MGMT')")
     public ApiResult<List<SysUser>> getAllUsers() {
         List<SysUser> users = userService.getAllUsers();
         users.forEach(u -> u.setPassword(null));
@@ -46,13 +47,13 @@ public class UserController {
     }
 
     @GetMapping("/no-permissions")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','SUBSYSTEM_ADMIN')")
+    @PreAuthorize("@subsystemAuth.hasAdmin('USER_MGMT')")
     public ApiResult<List<SysUser>> getUsersWithoutPermission(@RequestParam(required = false) String keyword) {
         return ApiResult.success(userService.getUsersWithoutPermission(keyword));
     }
 
     @GetMapping("/export")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','SUBSYSTEM_ADMIN')")
+    @PreAuthorize("@subsystemAuth.hasAdmin('USER_MGMT')")
     public void exportUsers(javax.servlet.http.HttpServletResponse response,
                             @RequestParam(required = false) String ids) throws Exception {
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -67,7 +68,7 @@ public class UserController {
     }
 
     @GetMapping("/import/template")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','SUBSYSTEM_ADMIN')")
+    @PreAuthorize("@subsystemAuth.hasAdmin('USER_MGMT')")
     public void downloadTemplate(javax.servlet.http.HttpServletResponse response) throws Exception {
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setHeader("Content-Disposition", "attachment; filename=import_template.xlsx");
@@ -75,13 +76,14 @@ public class UserController {
     }
 
     @PostMapping("/import")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','SUBSYSTEM_ADMIN')")
+    @PreAuthorize("@subsystemAuth.hasAdmin('USER_MGMT')")
     @OperationLog(value = "批量导入用户", subsystem = "USER_MGMT")
     public ApiResult<ImportResult> importUsers(@RequestParam("file") org.springframework.web.multipart.MultipartFile file) throws Exception {
         return ApiResult.success(userExcelService.importUsers(file.getInputStream()));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("@subsystemAuth.hasQuery('USER_MGMT')")
     public ApiResult<SysUser> getUserById(@PathVariable Long id) {
         SysUser user = userService.getUserById(id);
         if (user != null) user.setPassword(null);
@@ -89,13 +91,13 @@ public class UserController {
     }
 
     @GetMapping("/{id}/detail")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','SUBSYSTEM_ADMIN')")
+    @PreAuthorize("@subsystemAuth.hasAdmin('USER_MGMT')")
     public ApiResult<UserDetailVO> getUserDetail(@PathVariable Long id) {
         return ApiResult.success(userService.getUserDetail(id));
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','SUBSYSTEM_ADMIN')")
+    @PreAuthorize("@subsystemAuth.hasAdmin('USER_MGMT')")
     @OperationLog(value = "新增用户", subsystem = "USER_MGMT")
     public ApiResult<SysUser> createUser(@RequestBody UserCreateRequest request) {
         try {
@@ -108,37 +110,54 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','SUBSYSTEM_ADMIN')")
+    @PreAuthorize("@subsystemAuth.hasAdmin('USER_MGMT')")
     @OperationLog(value = "更新用户信息", subsystem = "USER_MGMT")
     public ApiResult<Boolean> updateUser(@PathVariable Long id, @RequestBody UserUpdateRequest request) {
-        return ApiResult.success(userService.updateUserWithRole(id, request));
+        try {
+            return ApiResult.success(userService.updateUserWithRole(id, request));
+        } catch (RuntimeException e) {
+            return ApiResult.error(e.getMessage());
+        }
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','SUBSYSTEM_ADMIN')")
+    @PreAuthorize("@subsystemAuth.hasAdmin('USER_MGMT')")
     @OperationLog(value = "删除用户", subsystem = "USER_MGMT")
     public ApiResult<Boolean> deleteUser(@PathVariable Long id) {
-        return ApiResult.success(userService.deleteUser(id));
+        try {
+            return ApiResult.success(userService.deleteUser(id));
+        } catch (RuntimeException e) {
+            return ApiResult.error(e.getMessage());
+        }
     }
 
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','SUBSYSTEM_ADMIN')")
+    @PreAuthorize("@subsystemAuth.hasAdmin('USER_MGMT')")
     @OperationLog(value = "变更用户状态", subsystem = "USER_MGMT")
     public ApiResult<Boolean> updateStatus(@PathVariable Long id, @RequestParam Integer status) {
-        return ApiResult.success(userService.updateStatus(id, status));
+        try {
+            return ApiResult.success(userService.updateStatus(id, status));
+        } catch (RuntimeException e) {
+            return ApiResult.error(e.getMessage());
+        }
     }
 
     @PutMapping("/{id}/password")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','SUBSYSTEM_ADMIN')")
+    @PreAuthorize("@subsystemAuth.hasAdmin('USER_MGMT')")
     @OperationLog(value = "重置用户密码", subsystem = "USER_MGMT")
     public ApiResult<Boolean> changePassword(@PathVariable Long id, @RequestBody com.portal.main.dto.ChangePasswordRequest request) {
-        return ApiResult.success(userService.changePassword(id, request.getNewPassword()));
+        try {
+            return ApiResult.success(userService.changePassword(id, request.getNewPassword()));
+        } catch (RuntimeException e) {
+            return ApiResult.error(e.getMessage());
+        }
     }
 
     /**
      * 获取用户关联的所有角色ID列表
      */
     @GetMapping("/{id}/roles")
+    @PreAuthorize("@subsystemAuth.hasQuery('USER_MGMT')")
     public ApiResult<java.util.List<Long>> getUserRoles(@PathVariable Long id) {
         java.util.List<com.portal.common.model.SysUserRole> list = userService.getUserRoleList(id);
         java.util.List<Long> roleIds = list.stream()

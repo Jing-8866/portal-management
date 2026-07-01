@@ -47,7 +47,7 @@
 var allRoles=[];
 var allUserList=[], selectedUserId=null;
 document.addEventListener('DOMContentLoaded', function(){
-    if(!isLoggedIn()){window.location.href='../../login.html';return;}
+    if(!assertSubsystemLogin(SUBSYSTEM_CODE.USER_MGMT))return;
     initUserDropdown(); highlightNav(); loadUsers();
     // 点击外部关闭下拉
     document.addEventListener('click', function(e){ if(!document.getElementById('userSelectWrap').contains(e.target)) closeDropdown(); });

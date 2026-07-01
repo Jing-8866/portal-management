@@ -80,9 +80,9 @@ let selectedSysId=null, permData=[];
 let checkedState={}, isDirty=false;
 
 document.addEventListener('DOMContentLoaded', function(){
-    if(!isLoggedIn()){window.location.href='../../login.html';return;}
+    if(!assertSubsystemLogin(SUBSYSTEM_CODE.USER_MGMT))return;
     initUserDropdown(); highlightNav(); loadBaseData();
-    if(isAdmin()) document.getElementById('savePermBtn').style.display='inline-flex';
+    if(hasSubsystemAdmin(SUBSYSTEM_CODE.USER_MGMT)) document.getElementById('savePermBtn').style.display='inline-flex';
 });
 function highlightNav(){var page=window.location.pathname.split('/').pop();document.querySelectorAll('.nav-item').forEach(function(item){var href=item.getAttribute('href');if(href&&href.split('/').pop()===page)item.classList.add('active');else item.classList.remove('active');});}
 
@@ -178,7 +178,7 @@ function renderRoleList(){
         return !keyword || item.name.toLowerCase().includes(keyword);
     });
     if(!filtered.length){document.getElementById('roleList').innerHTML='<div class="perm-placeholder">无匹配</div>';return;}
-    var dis=isAdmin()?'':' disabled';
+    var dis=hasSubsystemAdmin(SUBSYSTEM_CODE.USER_MGMT)?'':' disabled';
     document.getElementById('roleList').innerHTML=filtered.map(function(item){
         var checks=types.map(function(t){
             var key=item.id+'_'+t;

@@ -23,7 +23,11 @@ function renderCart(items) {
         return;
     }
     var total = 0;
-    var html = '<div class="cart-list">';
+    var html = '<div class="toolbar" style="margin-bottom:12px;">' +
+        '<div class="toolbar-left"><span style="font-size:14px;color:#666;">共 ' + items.length + ' 种商品</span></div>' +
+        '<div class="toolbar-right">' +
+        '<button class="btn btn-danger btn-sm" onclick="clearCart()"><i class="fas fa-trash-alt"></i> 清空购物车</button>' +
+        '</div></div><div class="cart-list">';
     items.forEach(function (item) {
         total += parseFloat(item.subtotal) || 0;
         var disabled = item.status !== 'on_shelf';
@@ -48,35 +52,48 @@ function renderCart(items) {
 }
 
 function renderAddressSelect() {
-    var container = document.getElementById('addressSelectList');
+    var select = document.getElementById('addressSelect');
+    var preview = document.getElementById('addressSelectPreview');
     if (!cartAddresses.length) {
-        container.innerHTML = '<div class="address-empty-tip">暂无收货地址，请先 <a href="addresses.html">添加地址</a></div>';
+        if (select) select.style.display = 'none';
+        if (preview) preview.innerHTML = '<div class="address-empty-tip">暂无收货地址，请先 <a href="addresses.html">添加地址</a></div>';
         selectedAddressId = null;
         return;
     }
+    if (select) select.style.display = '';
     if (!selectedAddressId) {
         var def = cartAddresses.find(function (a) { return a.isDefault === 1; });
         selectedAddressId = def ? def.id : cartAddresses[0].id;
     }
-    container.innerHTML = cartAddresses.map(function (a) {
+    select.innerHTML = cartAddresses.map(function (a) {
         var full = (a.province || '') + (a.city || '') + (a.district || '') + (a.detailAddress || '');
-        var checked = a.id === selectedAddressId ? ' checked' : '';
-        return '<label class="address-select-item' + (a.id === selectedAddressId ? ' selected' : '') + '">' +
-            '<input type="radio" name="checkoutAddress" value="' + a.id + '"' + checked + ' onchange="selectAddress(' + a.id + ')">' +
-            '<div class="address-select-body">' +
-            '<div class="address-select-head">' +
-            '<strong>' + (a.receiverName || '') + '</strong> ' + (a.receiverPhone || '') +
-            (a.label ? ' <span class="address-label">' + a.label + '</span>' : '') +
-            (a.isDefault === 1 ? ' <span class="address-default-tag">默认</span>' : '') +
-            '</div>' +
-            '<div class="address-select-full">' + full + '</div>' +
-            '</div></label>';
+        var labelPrefix = a.label ? '[' + a.label + '] ' : '';
+        var text = labelPrefix + (a.receiverName || '') + ' ' + (a.receiverPhone || '') + ' - ' + full;
+        return '<option value="' + a.id + '"' + (a.id === selectedAddressId ? ' selected' : '') + '>' + text + '</option>';
     }).join('');
+    select.value = String(selectedAddressId);
+    renderAddressPreview();
+}
+
+function renderAddressPreview() {
+    var preview = document.getElementById('addressSelectPreview');
+    if (!preview) return;
+    var a = cartAddresses.find(function (x) { return x.id === selectedAddressId; });
+    if (!a) {
+        preview.innerHTML = '';
+        return;
+    }
+    var full = (a.province || '') + (a.city || '') + (a.district || '') + (a.detailAddress || '');
+    preview.innerHTML = '<div class="address-select-head">' +
+        '<strong>' + (a.receiverName || '') + '</strong> ' + (a.receiverPhone || '') +
+        (a.label ? ' <span class="address-label">' + a.label + '</span>' : '') +
+        (a.isDefault === 1 ? ' <span class="address-default-tag">默认</span>' : '') +
+        '</div><div class="address-select-full">' + full + '</div>';
 }
 
 function selectAddress(id) {
-    selectedAddressId = id;
-    renderAddressSelect();
+    selectedAddressId = parseInt(id, 10);
+    renderAddressPreview();
 }
 
 async function changeQty(id, qty) {
@@ -97,6 +114,16 @@ async function removeItem(id) {
         loadCart();
         updateCartBadge();
     } catch (e) { showToast(e.message || '移除失败', 'error'); }
+}
+
+async function clearCart() {
+    if (!confirm('确定清空购物车中的所有商品？')) return;
+    try {
+        await request('/cart', { method: 'DELETE' });
+        showToast('购物车已清空', 'success');
+        loadCart();
+        updateCartBadge();
+    } catch (e) { showToast(e.message || '清空失败', 'error'); }
 }
 
 async function submitCheckout() {

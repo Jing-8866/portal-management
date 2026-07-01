@@ -1,12 +1,12 @@
 let allInstances=[], filteredInstances=[], allDbTypes=[], selectedDbTypes=[], dbTypeFilterInitialized=false;
 document.addEventListener('DOMContentLoaded', function(){
-    if(!isLoggedIn()){window.location.href='../../login.html';return;}
+    if (!assertSubsystemLogin(SUBSYSTEM_CODE.DB_MGMT)) return;
     initUserDropdown(); clearSearchInputs(); loadInstances();
     document.addEventListener('click', function(e) {
         var wrap = document.getElementById('dbTypeFilterWrap');
         if (wrap && !wrap.contains(e.target)) closeDbTypeFilter();
     });
-    if(isAdmin()){
+    if(hasSubsystemAdmin(SUBSYSTEM_CODE.DB_MGMT)){
         document.getElementById('adminBtns').innerHTML=
             '<button class="btn btn-secondary" onclick="refreshAll()"><i class="fas fa-sync-alt"></i> 全部刷新</button>'+
             '<button class="btn btn-primary" onclick="openAddInstance()"><i class="fas fa-plus"></i> 新增实例</button>';
@@ -144,8 +144,10 @@ function buildCardHtml(inst){
     var statusClass=inst.status===1?'online':'offline';
     var statusText=inst.status===1?'在线':'离线';
     var tableCount=inst.status===1?(inst.tableCount||0):0;
-    var actions='<button class="btn btn-sm btn-primary" onclick="viewTables('+inst.id+')"><i class="fas fa-table"></i> 查看表</button>';
-    if(isAdmin()){
+    var actions = inst.status === 1
+        ? '<button class="btn btn-sm btn-primary" onclick="viewTables('+inst.id+')"><i class="fas fa-table"></i> 查看表</button>'
+        : '<button class="btn btn-sm btn-primary" disabled title="实例离线，无法查看表"><i class="fas fa-table"></i> 查看表</button>';
+    if(hasSubsystemAdmin(SUBSYSTEM_CODE.DB_MGMT)){
         actions+=' <button class="btn-icon" onclick="editInstance('+inst.id+')" title="编辑"><i class="fas fa-edit"></i></button>'+
             ' <button class="btn-icon btn-icon-danger" onclick="deleteInstance('+inst.id+')" title="删除"><i class="fas fa-trash"></i></button>'+
             ' <button class="btn-icon" onclick="refreshInstance('+inst.id+')" title="刷新连接状态"><i class="fas fa-sync-alt"></i></button>';

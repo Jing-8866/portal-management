@@ -1,6 +1,6 @@
 let allLogs=[], filteredLogs=[], logPage=1, logPageSize=10, subsystemMap={};
 document.addEventListener('DOMContentLoaded', function(){
-    if(!isLoggedIn()){window.location.href='../../login.html';return;}
+    if (!assertSubsystemLogin(SUBSYSTEM_CODE.LOG_ANALYSIS)) return;
     initUserDropdown(); clearSearchInputs(); initDefaultDateRange(); initPage();
 });
 async function initPage(){ await loadSources(); loadLogs(); }
@@ -111,7 +111,7 @@ function renderTable(){
                 statusHtml='<span class="status-fail">失败</span>';
             }
             var deleteBtn='';
-            if(isAdmin()){
+            if(hasSubsystemAdmin(SUBSYSTEM_CODE.LOG_ANALYSIS)){
                 deleteBtn='<button class="btn btn-sm btn-danger" onclick="deleteLog('+log.id+')"><i class="fas fa-trash"></i></button>';
             }
             return '<tr><td>'+formatTime(log.createdTime)+'</td><td>'+levelBadge+'</td><td>'+(subsystemMap[log.subsystemCode]||log.subsystemCode||'-')+'</td><td>'+(log.username||'-')+'</td><td>'+(log.operation||'-')+'</td><td>'+(log.ip||'-')+'</td><td>'+statusHtml+'</td><td>'+(log.duration||'-')+'</td><td>'+deleteBtn+'</td></tr>';

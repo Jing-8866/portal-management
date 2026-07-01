@@ -107,17 +107,17 @@ let instanceId, allInstances=[], allTables=[], filteredTables=[], tablePage=1, t
 let currentStructureTable='';
 
 document.addEventListener('DOMContentLoaded', function(){
-    if(!isLoggedIn()){window.location.href='../../login.html';return;}
+    if(!assertSubsystemLogin(SUBSYSTEM_CODE.DB_MGMT))return;
     initUserDropdown(); clearSearchInputs(); highlightNav();
     initPage();
 });
 
 async function initPage(){
     try{
-        allInstances = await request('/db/instances') || [];
+        allInstances = (await request('/db/instances') || []).filter(function(i){ return i.status === 1; });
         if(!allInstances.length){
-            showToast('暂无数据库实例','warning');
-            document.getElementById('instanceFilter').innerHTML = '<option value="">暂无实例</option>';
+            showToast('暂无在线实例，请先在实例管理中配置并刷新','warning');
+            document.getElementById('instanceFilter').innerHTML = '<option value="">暂无在线实例</option>';
             return;
         }
         renderInstanceFilter();
@@ -127,7 +127,7 @@ async function initPage(){
             instanceId = urlId;
         } else {
             instanceId = String(allInstances[0].id);
-            if(urlId) showToast('指定实例不存在，已切换到默认实例','warning');
+            if(urlId) showToast('指定实例离线或不存在，已切换到在线实例','warning');
         }
         syncInstanceSelection();
         loadTables();

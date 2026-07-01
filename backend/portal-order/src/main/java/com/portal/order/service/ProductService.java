@@ -29,7 +29,7 @@ public class ProductService {
         }
         if (StringUtils.hasText(status)) {
             wrapper.eq(BizProduct::getStatus, status);
-        } else if (!OrderSecurityHelper.isAdmin()) {
+        } else if (!OrderSecurityHelper.isOrderAdmin()) {
             wrapper.eq(BizProduct::getStatus, "on_shelf");
         }
         wrapper.orderByDesc(BizProduct::getCreatedTime);
@@ -39,7 +39,7 @@ public class ProductService {
     public BizProduct getProductById(Long id) {
         BizProduct product = productMapper.selectById(id);
         if (product == null) throw new RuntimeException("商品不存在");
-        if (!OrderSecurityHelper.isAdmin() && !"on_shelf".equals(product.getStatus())) {
+        if (!OrderSecurityHelper.isOrderAdmin() && !"on_shelf".equals(product.getStatus())) {
             throw new RuntimeException("商品已下架");
         }
         return product;

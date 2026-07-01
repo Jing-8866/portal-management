@@ -77,7 +77,7 @@ var selectedSysId=null, rolePerms=[], userPerms=[], currentViewTab='role';
 var viewPage=1, viewPageSize=10;
 
 document.addEventListener('DOMContentLoaded', function(){
-    if(!isLoggedIn()){window.location.href='../../login.html';return;}
+    if(!assertSubsystemLogin(SUBSYSTEM_CODE.USER_MGMT))return;
     initUserDropdown(); highlightNav(); loadData();
 });
 function highlightNav(){var page=window.location.pathname.split('/').pop();document.querySelectorAll('.nav-item').forEach(function(item){var href=item.getAttribute('href');if(href&&href.split('/').pop()===page)item.classList.add('active');else item.classList.remove('active');});}

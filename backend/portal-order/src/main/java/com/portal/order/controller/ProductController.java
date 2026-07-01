@@ -23,6 +23,7 @@ public class ProductController {
     private ProductImageService productImageService;
 
     @GetMapping
+    @PreAuthorize("@subsystemAuth.hasQuery('ORDER_MGMT')")
     public ApiResult<List<BizProduct>> getProductList(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String status,
@@ -31,12 +32,13 @@ public class ProductController {
     }
 
     @GetMapping("/categories")
+    @PreAuthorize("@subsystemAuth.hasQuery('ORDER_MGMT')")
     public ApiResult<java.util.List<String>> listCategories() {
         return ApiResult.success(productService.listCategories());
     }
 
     @PostMapping("/upload-image")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','SUBSYSTEM_ADMIN')")
+    @PreAuthorize("@subsystemAuth.hasAdmin('ORDER_MGMT')")
     @OperationLog(value = "上传商品图片", subsystem = "ORDER_MGMT")
     public ApiResult<Map<String, String>> uploadProductImage(@RequestParam("file") MultipartFile file) {
         try {
@@ -52,12 +54,13 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("@subsystemAuth.hasQuery('ORDER_MGMT')")
     public ApiResult<BizProduct> getProductById(@PathVariable Long id) {
         return ApiResult.success(productService.getProductById(id));
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','SUBSYSTEM_ADMIN')")
+    @PreAuthorize("@subsystemAuth.hasAdmin('ORDER_MGMT')")
     @OperationLog(value = "创建商品", subsystem = "ORDER_MGMT")
     public ApiResult<Boolean> createProduct(@RequestBody BizProduct product) {
         try {
@@ -68,7 +71,7 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','SUBSYSTEM_ADMIN')")
+    @PreAuthorize("@subsystemAuth.hasAdmin('ORDER_MGMT')")
     @OperationLog(value = "更新商品", subsystem = "ORDER_MGMT")
     public ApiResult<Boolean> updateProduct(@PathVariable Long id, @RequestBody BizProduct product) {
         try {
@@ -79,7 +82,7 @@ public class ProductController {
     }
 
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','SUBSYSTEM_ADMIN')")
+    @PreAuthorize("@subsystemAuth.hasAdmin('ORDER_MGMT')")
     @OperationLog(value = "变更商品状态", subsystem = "ORDER_MGMT")
     public ApiResult<Boolean> updateProductStatus(@PathVariable Long id, @RequestParam String status) {
         try {
@@ -90,7 +93,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','SUBSYSTEM_ADMIN')")
+    @PreAuthorize("@subsystemAuth.hasAdmin('ORDER_MGMT')")
     @OperationLog(value = "删除商品", subsystem = "ORDER_MGMT")
     public ApiResult<Boolean> deleteProduct(@PathVariable Long id) {
         return ApiResult.success(productService.deleteProduct(id));

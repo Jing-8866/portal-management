@@ -12,7 +12,8 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
 
     @Select("<script>" +
             "SELECT u.* FROM sys_user u " +
-            "WHERE u.id NOT IN (SELECT DISTINCT user_id FROM v_user_effective_permission) " +
+            "WHERE u.username &lt;&gt; 'admin' " +
+            "AND u.id NOT IN (SELECT DISTINCT user_id FROM v_user_effective_permission) " +
             "<if test='keyword != null and keyword != \"\"'>" +
             "AND (u.username LIKE CONCAT('%', #{keyword}, '%') " +
             "OR u.real_name LIKE CONCAT('%', #{keyword}, '%') " +

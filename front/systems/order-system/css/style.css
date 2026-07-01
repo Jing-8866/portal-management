@@ -153,10 +153,8 @@ tr:hover { background:#f8fafc; }
 .btn-link.danger { color:#EF4444; }
 .btn-link:hover { text-decoration:underline; }
 
-.address-select-list { display:flex; flex-direction:column; gap:10px; }
-.address-select-item { display:flex; gap:12px; align-items:flex-start; padding:14px; border:2px solid #e5e7eb; border-radius:8px; cursor:pointer; background:#fff; }
-.address-select-item.selected { border-color:#3B82F6; background:#F8FAFF; }
-.address-select-item input { margin-top:4px; }
+.address-select-preview { padding:12px 14px; background:#F8FAFF; border:1px solid #DBEAFE; border-radius:8px; }
+#addressSelect { width:100%; padding:10px 12px; border:1px solid #e0e0e0; border-radius:6px; font-size:14px; background:#fff; cursor:pointer; }
 .address-select-head { font-size:14px; margin-bottom:4px; }
 .address-select-full { font-size:13px; color:#666; line-height:1.5; }
 .address-empty-tip { padding:20px; background:#fff; border-radius:8px; color:#666; font-size:14px; }

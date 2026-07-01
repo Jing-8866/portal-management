@@ -23,7 +23,7 @@
 <script src="../../js/config.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
-    if(!isLoggedIn()){window.location.href='../../login.html';return;}
+    if(!assertSubsystemLogin(SUBSYSTEM_CODE.USER_MGMT))return;
     initUserDropdown();
     var page=window.location.pathname.split('/').pop();document.querySelectorAll('.nav-item').forEach(function(item){var href=item.getAttribute('href');if(href&&href.split('/').pop()===page)item.classList.add('active');else item.classList.remove('active');});
 });

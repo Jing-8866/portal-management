@@ -15,29 +15,35 @@ var ORDER_STATUS_CLASS = {
 var PRODUCT_STATUS_MAP = { on_shelf: '上架', off_shelf: '下架' };
 
 function getOrderSidebarHtml(activePage) {
-    var adminNav = isAdmin() ? (
+    var canQuery = hasSubsystemQuery(SUBSYSTEM_CODE.ORDER_MGMT);
+    var adminNav = hasSubsystemAdmin(SUBSYSTEM_CODE.ORDER_MGMT) ? (
         '<div class="nav-group-title">商品管理</div>' +
         '<a class="nav-item' + (activePage === 'product-admin.html' ? ' active' : '') + '" href="product-admin.html"><i class="fas fa-box"></i> 商品管理</a>' +
         '<a class="nav-item' + (activePage === 'category-admin.html' ? ' active' : '') + '" href="category-admin.html"><i class="fas fa-tags"></i> 分类管理</a>' +
         '<div class="nav-group-title">数据分析</div>' +
         '<a class="nav-item' + (activePage === 'order-stats.html' ? ' active' : '') + '" href="order-stats.html"><i class="fas fa-chart-bar"></i> 订单统计</a>'
     ) : '';
+    var shopNav = canQuery
+        ? '<a class="nav-item' + (activePage === 'index.html' ? ' active' : '') + '" href="index.html"><i class="fas fa-store"></i> 商品列表</a>'
+        : '';
+    var orderNav = canQuery
+        ? '<a class="nav-item' + (activePage === 'orders.html' ? ' active' : '') + '" href="orders.html"><i class="fas fa-list-alt"></i> 我的订单</a>' +
+          (hasSubsystemAdmin(SUBSYSTEM_CODE.ORDER_MGMT) ? '<a class="nav-item' + (activePage === 'orders-all.html' ? ' active' : '') + '" href="orders-all.html"><i class="fas fa-clipboard-list"></i> 全部订单</a>' : '')
+        : '';
     return '<div class="sidebar-header"><div class="logo"><i class="fas fa-cart-shopping"></i></div><h2>订单商城</h2></div>' +
         '<nav class="sidebar-nav">' +
         '<div class="nav-group-title">商城</div>' +
-        '<a class="nav-item' + (activePage === 'index.html' ? ' active' : '') + '" href="index.html"><i class="fas fa-store"></i> 商品列表</a>' +
+        shopNav +
         '<a class="nav-item' + (activePage === 'cart.html' ? ' active' : '') + '" href="cart.html"><i class="fas fa-shopping-cart"></i> 购物车 <span id="cartBadge" class="nav-badge" style="display:none;"></span></a>' +
         '<a class="nav-item' + (activePage === 'addresses.html' ? ' active' : '') + '" href="addresses.html"><i class="fas fa-map-marker-alt"></i> 收货地址</a>' +
-        '<div class="nav-group-title">订单</div>' +
-        '<a class="nav-item' + (activePage === 'orders.html' ? ' active' : '') + '" href="orders.html"><i class="fas fa-list-alt"></i> 我的订单</a>' +
-        (isAdmin() ? '<a class="nav-item' + (activePage === 'orders-all.html' ? ' active' : '') + '" href="orders-all.html"><i class="fas fa-clipboard-list"></i> 全部订单</a>' : '') +
+        (orderNav ? '<div class="nav-group-title">订单</div>' + orderNav : '') +
         adminNav +
         '</nav>' +
         '<div class="sidebar-footer"><a href="../../index.html"><i class="fas fa-arrow-left"></i> 返回门户首页</a></div>';
 }
 
 function initOrderLayout(activePage) {
-    if (!isLoggedIn()) { window.location.href = '../../login.html'; return false; }
+    if (!assertSubsystemLogin(SUBSYSTEM_CODE.ORDER_MGMT)) return false;
     var sidebar = document.querySelector('.sidebar');
     if (sidebar) sidebar.innerHTML = getOrderSidebarHtml(activePage);
     initUserDropdown();
@@ -130,24 +136,80 @@ function getStatusFilterOptions() {
     ];
 }
 
-/** 构建物流进度时间线 HTML（优先使用后端返回的 logistics 数据） */
+/** 构建物流进度时间线 HTML（优先使用后端返回的 logistics 数据；付款前不展示） */
+function shouldShowLogistics(order) {
+    if (!order) return false;
+    if (order.status === 'pending') return false;
+    if (order.status === 'cancelled' && !order.payTime) return false;
+    return true;
+}
+
 function buildLogisticsTimelineHtml(order, logistics) {
-    var nodes = (logistics && logistics.length) ? mapLogisticsFromApi(logistics) : buildLogisticsNodes(order);
+    var nodes = resolveLogisticsNodes(order, logistics);
     if (!nodes.length) return '';
-    var html = '<div class="logistics-section"><h4 class="logistics-title"><i class="fas fa-truck"></i> 物流进度</h4><div class="logistics-timeline">';
+    logisticsNodesCache = nodes;
+    var latestNode = nodes[getLatestLogisticsIndex(nodes)];
+    var html = '<div class="logistics-section">';
+    html += '<h4 class="logistics-title"><i class="fas fa-truck"></i> 物流进度</h4>';
+    html += '<div class="logistics-timeline logistics-timeline-summary">';
+    html += renderLogisticsStepHtml(latestNode, { isLast: true });
+    html += '</div>';
+    if (nodes.length > 1) {
+        html += '<button type="button" class="logistics-link" onclick="openLogisticsModal()">查看完整物流 <i class="fas fa-chevron-right"></i></button>';
+    }
+    html += '</div>';
+    return html;
+}
+
+var logisticsNodesCache = [];
+
+function resolveLogisticsNodes(order, logistics) {
+    if (!shouldShowLogistics(order)) return [];
+    return (logistics && logistics.length) ? mapLogisticsFromApi(logistics) : buildLogisticsNodes(order);
+}
+
+function buildFullLogisticsTimelineHtml(nodes) {
+    var html = '<div class="logistics-timeline">';
     nodes.forEach(function (node, i) {
-        var isLast = i === nodes.length - 1;
-        html += '<div class="logistics-step ' + node.state + (isLast ? ' last' : '') + '">';
-        html += '<div class="logistics-dot"><i class="fas ' + (node.icon || 'fa-circle') + '"></i></div>';
-        html += '<div class="logistics-content">';
-        html += '<div class="logistics-step-title">' + node.title + '</div>';
-        if (node.location) {
-            html += '<div class="logistics-step-location"><i class="fas fa-map-marker-alt"></i><span>' + escapeHtml(node.location) + '</span></div>';
-        }
-        if (node.desc) html += '<div class="logistics-step-desc">' + escapeHtml(node.desc) + '</div>';
-        if (node.time) html += '<div class="logistics-step-time">' + formatTime(node.time) + '</div>';
-        html += '</div></div>';
+        html += renderLogisticsStepHtml(node, { isLast: i === nodes.length - 1 });
     });
+    html += '</div>';
+    return html;
+}
+
+function openLogisticsModal() {
+    var modal = document.getElementById('logisticsModal');
+    var body = document.getElementById('logisticsModalBody');
+    if (!modal || !body || !logisticsNodesCache.length) return;
+    body.innerHTML = buildFullLogisticsTimelineHtml(logisticsNodesCache);
+    modal.style.display = 'flex';
+}
+
+function closeLogisticsModal() {
+    var modal = document.getElementById('logisticsModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function getLatestLogisticsIndex(nodes) {
+    for (var i = nodes.length - 1; i >= 0; i--) {
+        if (nodes[i].state !== 'wait') return i;
+    }
+    return nodes.length - 1;
+}
+
+function renderLogisticsStepHtml(node, options) {
+    options = options || {};
+    var isLast = options.isLast;
+    var extraClass = options.extraClass || '';
+    var html = '<div class="logistics-step ' + node.state + (isLast ? ' last' : '') + extraClass + '">';
+    html += '<div class="logistics-dot"><i class="fas ' + (node.icon || 'fa-circle') + '"></i></div>';
+    html += '<div class="logistics-content">';
+    html += '<div class="logistics-step-title">' + node.title + '</div>';
+    if (node.location) {
+        html += '<div class="logistics-step-location"><i class="fas fa-map-marker-alt"></i><span>' + escapeHtml(node.location) + '</span></div>';
+    }
+    if (node.desc) html += '<div class="logistics-step-desc">' + escapeHtml(node.desc) + '</div>';
+    if (node.time) html += '<div class="logistics-step-time">' + formatTime(node.time) + '</div>';
     html += '</div></div>';
     return html;
 }
@@ -242,7 +304,7 @@ function buildLogisticsNodes(order) {
 }
 
 async function reorderToCart(orderId) {
-    if (!confirm('将该订单的商品重新加入购物车？')) return;
+    if (!confirm('将该订单的商品重新加入购物车？加入后该订单将从列表中移除。')) return;
     try {
         var res = await request('/orders/' + orderId + '/reorder-to-cart', { method: 'POST' });
         var msg = '已成功加入 ' + (res.addedCount || 0) + ' 种商品到购物车';
@@ -253,6 +315,12 @@ async function reorderToCart(orderId) {
             showToast(msg, 'success');
         }
         updateCartBadge();
+        sessionStorage.setItem('orderListNeedRefresh', '1');
+        if (typeof refreshOrderListPage === 'function') {
+            refreshOrderListPage();
+        } else if (window.location.pathname.indexOf('order-detail.html') >= 0) {
+            window.location.href = 'orders.html';
+        }
     } catch (e) {
         showToast(e.message || '加入购物车失败', 'error');
     }

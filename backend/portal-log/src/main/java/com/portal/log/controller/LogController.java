@@ -18,6 +18,7 @@ public class LogController {
     private LogService logService;
 
     @GetMapping("/all")
+    @PreAuthorize("@subsystemAuth.hasQuery('LOG_ANALYSIS')")
     public ApiResult<List<SysOperationLog>> getAllLogs(
             @RequestParam(required = false) String level,
             @RequestParam(required = false) String subsystemCode,
@@ -28,17 +29,19 @@ public class LogController {
     }
 
     @GetMapping("/subsystem-codes")
+    @PreAuthorize("@subsystemAuth.hasQuery('LOG_ANALYSIS')")
     public ApiResult<List<String>> getSubsystemCodes() {
         return ApiResult.success(logService.getAllSubsystemCodes());
     }
 
     @GetMapping("/stats")
+    @PreAuthorize("@subsystemAuth.hasQuery('LOG_ANALYSIS')")
     public ApiResult<Map<String, Object>> getTodayStats() {
         return ApiResult.success(logService.getTodayStats());
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','SUBSYSTEM_ADMIN')")
+    @PreAuthorize("@subsystemAuth.hasAdmin('LOG_ANALYSIS')")
     @OperationLog(value = "删除日志", subsystem = "LOG_ANALYSIS")
     public ApiResult<Boolean> deleteLog(@PathVariable Long id) {
         return ApiResult.success(logService.deleteLog(id));

@@ -7,6 +7,8 @@ import com.portal.common.model.SysUserSubsystem;
 import com.portal.main.service.PermissionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -17,25 +19,35 @@ public class PermissionController {
     private PermissionService permissionService;
 
     @PostMapping("/grant")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','SUBSYSTEM_ADMIN')")
+    @PreAuthorize("@subsystemAuth.hasAdmin('USER_MGMT')")
     @OperationLog(value = "分配权限", subsystem = "USER_MGMT")
     public ApiResult<Boolean> grantPermission(@RequestBody PermissionRequest request) {
-        return ApiResult.success(permissionService.grantPermission(request));
+        try {
+            return ApiResult.success(permissionService.grantPermission(request, currentUserId()));
+        } catch (RuntimeException e) {
+            return ApiResult.error(e.getMessage());
+        }
     }
 
     @DeleteMapping("/revoke")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','SUBSYSTEM_ADMIN')")
+    @PreAuthorize("@subsystemAuth.hasAdmin('USER_MGMT')")
     @OperationLog(value = "撤销权限", subsystem = "USER_MGMT")
     public ApiResult<Boolean> revokePermission(@RequestParam Long userId, @RequestParam Long subsystemId, @RequestParam String permissionType) {
-        return ApiResult.success(permissionService.revokePermission(userId, subsystemId, permissionType));
+        try {
+            return ApiResult.success(permissionService.revokePermission(userId, subsystemId, permissionType, currentUserId()));
+        } catch (RuntimeException e) {
+            return ApiResult.error(e.getMessage());
+        }
     }
 
     @GetMapping("/user/{userId}")
+    @PreAuthorize("@subsystemAuth.hasQuery('USER_MGMT')")
     public ApiResult<List<SysUserSubsystem>> getUserPermissions(@PathVariable Long userId) {
         return ApiResult.success(permissionService.getUserPermissions(userId));
     }
 
     @GetMapping("/subsystem/{subsystemId}")
+    @PreAuthorize("@subsystemAuth.hasQuery('USER_MGMT')")
     public ApiResult<List<SysUserSubsystem>> getSubsystemUsers(@PathVariable Long subsystemId) {
         return ApiResult.success(permissionService.getSubsystemUsers(subsystemId));
     }
@@ -43,11 +55,14 @@ public class PermissionController {
     @Autowired
     private com.portal.main.mapper.SysSubsystemMapper subsystemMapper;
 
-    /**
-     * 获取用户的有效权限（合并直接分配 + 角色继承）
-     */
     @GetMapping("/user/{userId}/effective")
+    @PreAuthorize("@subsystemAuth.hasQuery('USER_MGMT')")
     public ApiResult<java.util.List<java.util.Map<String, Object>>> getEffectivePermissions(@PathVariable Long userId) {
         return ApiResult.success(subsystemMapper.selectEffectivePermissions(userId));
+    }
+
+    private Long currentUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return (Long) auth.getPrincipal();
     }
 }

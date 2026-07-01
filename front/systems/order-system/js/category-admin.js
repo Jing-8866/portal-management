@@ -4,7 +4,7 @@ var categoryProductCounts = {};
 
 document.addEventListener('DOMContentLoaded', function () {
     if (!initOrderLayout('category-admin.html')) return;
-    if (!isAdmin()) {
+    if (!hasSubsystemAdmin(SUBSYSTEM_CODE.ORDER_MGMT)) {
         showToast('无权访问', 'error');
         setTimeout(function () { window.location.href = 'index.html'; }, 800);
         return;

@@ -117,7 +117,15 @@
                 if (!res) return;
                 if (res.token) {
                     setToken(res.token);
-                    var userInfo = { userId: res.userId, username: res.username, realName: res.realName, roleCode: res.roleCode };
+                    var userInfo = {
+                        userId: res.userId,
+                        username: res.username,
+                        realName: res.realName,
+                        roleCode: res.roleCode,
+                        loginSubsystemCodes: res.loginSubsystemCodes || [],
+                        querySubsystemCodes: res.querySubsystemCodes || [],
+                        adminSubsystemCodes: res.adminSubsystemCodes || []
+                    };
                     setCurrentUser(userInfo);
                     window.location.replace('index.html');
                 } else {

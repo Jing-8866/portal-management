@@ -3,6 +3,7 @@ package com.portal.main.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.portal.common.model.*;
+import com.portal.common.util.PlatformAdminUser;
 import com.portal.main.dto.ImportResult;
 import com.portal.main.mapper.*;
 import org.apache.poi.ss.usermodel.*;
@@ -48,6 +49,9 @@ public class UserExcelService {
         }
         int rowIdx = 1;
         for (SysUser user : users) {
+            if (PlatformAdminUser.isProtectedUser(user)) {
+                continue;
+            }
             Row row = sheet.createRow(rowIdx++);
             row.createCell(0).setCellValue(user.getUsername() != null ? user.getUsername() : "");
             row.createCell(1).setCellValue(user.getRealName() != null ? user.getRealName() : "");
@@ -106,6 +110,17 @@ public class UserExcelService {
             if (!StringUtils.hasText(username)) {
                 result.setFailedCount(result.getFailedCount() + 1);
                 result.getErrors().add("第" + (i+1) + "行: 用户名为空");
+                continue;
+            }
+            username = username.trim();
+            if (PlatformAdminUser.isProtectedUsername(username)) {
+                SysUser existAdmin = userMapper.selectOne(new LambdaQueryWrapper<SysUser>().eq(SysUser::getUsername, username));
+                if (existAdmin != null) {
+                    result.getErrors().add("第" + (i+1) + "行(admin): 系统管理员账号不可通过导入修改，已跳过");
+                } else {
+                    result.setFailedCount(result.getFailedCount() + 1);
+                    result.getErrors().add("第" + (i+1) + "行: 不可创建系统管理员账号");
+                }
                 continue;
             }
 

@@ -15,7 +15,7 @@ function initOrderListPage(config) {
 
     function boot() {
         if (!initOrderLayout(orderListConfig.activePage)) return;
-        if (orderListConfig.adminOnly && !isAdmin()) {
+        if (orderListConfig.adminOnly && !hasSubsystemAdmin(SUBSYSTEM_CODE.ORDER_MGMT)) {
             showToast('无权访问', 'error');
             setTimeout(function () { window.location.href = 'orders.html'; }, 800);
             return;
@@ -165,6 +165,9 @@ function buildQuickActions(o) {
         if (o.status === 'cancelled') {
             html += '<button class="btn-action btn-primary" onclick="reorderToCart(' + o.id + ')">加入购物车</button>';
         }
+        if (canDeleteOrder(o)) {
+            html += '<button class="btn-action btn-danger" onclick="deleteOrder(' + o.id + ')">删除</button>';
+        }
     }
     if (orderListConfig.scope === 'all') {
         if (o.status === 'paid') html += '<button class="btn-action btn-primary" onclick="updateOrderStatus(' + o.id + ',\'shipped\')">发货</button>';
@@ -216,6 +219,19 @@ function renderPagination() {
 
 function goPage(p) { orderPage = p; renderTable(); }
 function viewOrder(id) { window.location.href = 'order-detail.html?id=' + id; }
+
+function canDeleteOrder(o) {
+    return ['cancelled', 'completed', 'refunded', 'returned'].indexOf(o.status) >= 0;
+}
+
+async function deleteOrder(id) {
+    if (!confirm('确定删除该订单？删除后不可恢复。')) return;
+    try {
+        await request('/orders/' + id, { method: 'DELETE' });
+        showToast('删除成功', 'success');
+        refreshOrderListPage();
+    } catch (e) { showToast(e.message || '删除失败', 'error'); }
+}
 
 async function updateOrderStatus(id, status) {
     var label = ORDER_STATUS_MAP[status] || status;

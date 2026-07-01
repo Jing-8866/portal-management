@@ -17,13 +17,14 @@ public class ProductCategoryController {
     private ProductCategoryService categoryService;
 
     @GetMapping
+    @PreAuthorize("@subsystemAuth.hasQuery('ORDER_MGMT')")
     public ApiResult<List<BizProductCategory>> listCategories(
             @RequestParam(required = false) String keyword) {
         return ApiResult.success(categoryService.listCategories(keyword));
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','SUBSYSTEM_ADMIN')")
+    @PreAuthorize("@subsystemAuth.hasAdmin('ORDER_MGMT')")
     public ApiResult<BizProductCategory> getCategoryById(@PathVariable Long id) {
         try {
             return ApiResult.success(categoryService.getCategoryById(id));
@@ -33,7 +34,7 @@ public class ProductCategoryController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','SUBSYSTEM_ADMIN')")
+    @PreAuthorize("@subsystemAuth.hasAdmin('ORDER_MGMT')")
     @OperationLog(value = "新增商品分类", subsystem = "ORDER_MGMT")
     public ApiResult<Boolean> createCategory(@RequestBody BizProductCategory category) {
         try {
@@ -44,7 +45,7 @@ public class ProductCategoryController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','SUBSYSTEM_ADMIN')")
+    @PreAuthorize("@subsystemAuth.hasAdmin('ORDER_MGMT')")
     @OperationLog(value = "更新商品分类", subsystem = "ORDER_MGMT")
     public ApiResult<Boolean> updateCategory(@PathVariable Long id, @RequestBody BizProductCategory category) {
         try {
@@ -55,7 +56,7 @@ public class ProductCategoryController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','SUBSYSTEM_ADMIN')")
+    @PreAuthorize("@subsystemAuth.hasAdmin('ORDER_MGMT')")
     @OperationLog(value = "删除商品分类", subsystem = "ORDER_MGMT")
     public ApiResult<Boolean> deleteCategory(@PathVariable Long id) {
         try {

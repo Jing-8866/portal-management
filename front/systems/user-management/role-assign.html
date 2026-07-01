@@ -81,7 +81,7 @@
 let allRoles=[], allUsers=[], selectedRoleId=null, assignedUserIds=[];
 let currentFilter='all', checkedMap={};
 document.addEventListener('DOMContentLoaded', function() {
-    if(!isLoggedIn()){window.location.href='../../login.html';return;}
+    if(!assertSubsystemLogin(SUBSYSTEM_CODE.USER_MGMT))return;
     initUserDropdown(); highlightNav(); loadData();
 });
 function highlightNav(){var page=window.location.pathname.split('/').pop();document.querySelectorAll('.nav-item').forEach(function(item){var href=item.getAttribute('href');if(href&&href.split('/').pop()===page)item.classList.add('active');else item.classList.remove('active');});}
@@ -103,7 +103,7 @@ async function selectRole(id){
     document.querySelectorAll('.role-item').forEach(function(el){el.classList.toggle('selected',el.dataset.id==id);});
     var role=allRoles.find(function(r){return r.id===id;});
     document.getElementById('assignTitle').innerHTML='<i class="fas fa-users"></i> '+role.roleName+' - 用户分配';
-    if(isAdmin()) document.getElementById('saveBtn').style.display='inline-flex';
+    if(hasSubsystemAdmin(SUBSYSTEM_CODE.USER_MGMT)) document.getElementById('saveBtn').style.display='inline-flex';
     try {
         var assigned = (await request('/roles/'+id+'/users'))||[];
         // 后端直接返回 userId 数组 [1, 2, 3]
@@ -146,7 +146,7 @@ function renderUserCheckList(){
     document.getElementById('userCheckList').innerHTML = filtered.map(function(u){
         var checked = checkedMap[u.id]?'checked':'';
         var cls = checkedMap[u.id]?'user-check-item assigned':'user-check-item';
-        var disabled=isAdmin()?'':' disabled';
+        var disabled=hasSubsystemAdmin(SUBSYSTEM_CODE.USER_MGMT)?'':' disabled';
         return '<div class="'+cls+'"><input type="checkbox" id="uc-'+u.id+'" value="'+u.id+'" '+checked+disabled+' onchange="updateAssignStats()"><label for="uc-'+u.id+'">'+u.username+(u.realName?' ('+u.realName+')':'')+'</label></div>';
     }).join('') || '<p style="color:#999;text-align:center;padding:20px;">无匹配用户</p>';
     updateAssignStats();

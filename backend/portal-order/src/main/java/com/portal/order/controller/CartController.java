@@ -5,6 +5,7 @@ import com.portal.common.dto.ApiResult;
 import com.portal.order.dto.CartItemVO;
 import com.portal.order.service.CartService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,11 +18,13 @@ public class CartController {
     private CartService cartService;
 
     @GetMapping
+    @PreAuthorize("@subsystemAuth.hasLogin('ORDER_MGMT')")
     public ApiResult<List<CartItemVO>> getCart() {
         return ApiResult.success(cartService.getCartItems());
     }
 
     @GetMapping("/count")
+    @PreAuthorize("@subsystemAuth.hasLogin('ORDER_MGMT')")
     public ApiResult<Map<String, Integer>> getCartCount() {
         Map<String, Integer> result = new java.util.HashMap<>();
         result.put("count", cartService.getCartCount());
@@ -29,6 +32,7 @@ public class CartController {
     }
 
     @PostMapping
+    @PreAuthorize("@subsystemAuth.hasLogin('ORDER_MGMT')")
     @OperationLog(value = "加入购物车", subsystem = "ORDER_MGMT")
     public ApiResult<Boolean> addToCart(@RequestBody Map<String, Object> body) {
         try {
@@ -41,6 +45,7 @@ public class CartController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("@subsystemAuth.hasLogin('ORDER_MGMT')")
     @OperationLog(value = "更新购物车", subsystem = "ORDER_MGMT")
     public ApiResult<Boolean> updateCartItem(@PathVariable Long id, @RequestBody Map<String, Integer> body) {
         try {
@@ -51,6 +56,7 @@ public class CartController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@subsystemAuth.hasLogin('ORDER_MGMT')")
     @OperationLog(value = "移除购物车项", subsystem = "ORDER_MGMT")
     public ApiResult<Boolean> removeCartItem(@PathVariable Long id) {
         try {
@@ -61,6 +67,7 @@ public class CartController {
     }
 
     @DeleteMapping
+    @PreAuthorize("@subsystemAuth.hasLogin('ORDER_MGMT')")
     @OperationLog(value = "清空购物车", subsystem = "ORDER_MGMT")
     public ApiResult<Boolean> clearCart() {
         return ApiResult.success(cartService.clearCart());

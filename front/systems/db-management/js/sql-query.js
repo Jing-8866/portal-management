@@ -11,7 +11,7 @@ var MIN_RESULT_HEIGHT = 160;
 var SQL_RESIZE_HANDLE_HEIGHT = 10;
 
 document.addEventListener('DOMContentLoaded', function() {
-    if (!isLoggedIn()) { window.location.href = '../../login.html'; return; }
+    if (!assertSubsystemLogin(SUBSYSTEM_CODE.DB_MGMT)) return;
     initUserDropdown();
     highlightNav();
     initSqlResize();
