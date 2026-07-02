@@ -104,6 +104,14 @@ public class DbInstanceController {
         catch (RuntimeException e) { return ApiResult.error(e.getMessage()); }
     }
 
+    @PostMapping("/instances/{id}/tables/refresh")
+    @PreAuthorize("@subsystemAuth.hasQuery('DB_MGMT')")
+    @OperationLog(value = "刷新表清单快照", subsystem = "DB_MGMT")
+    public ApiResult<List<Map<String, Object>>> refreshTableSnapshot(@PathVariable Long id) {
+        try { return ApiResult.success(dbService.refreshTableSnapshot(id)); }
+        catch (RuntimeException e) { return ApiResult.error(e.getMessage()); }
+    }
+
     @GetMapping("/instances/{id}/tables/{tableName}/structure")
     @PreAuthorize("@subsystemAuth.hasQuery('DB_MGMT')")
     public ApiResult<List<Map<String, Object>>> getTableStructure(@PathVariable Long id, @PathVariable String tableName) {

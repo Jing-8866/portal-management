@@ -67,6 +67,10 @@
             </div>
             <div class="toolbar">
                 <div class="toolbar-left">
+                    <label class="filter-label" for="dbTypeFilter">数据库类型</label>
+                    <select class="filter-select" id="dbTypeFilter" onchange="onDbTypeFilterChange()" style="min-width:120px;">
+                        <option value="">加载中...</option>
+                    </select>
                     <label class="filter-label" for="instanceFilter">实例名称</label>
                     <select class="filter-select" id="instanceFilter" onchange="onInstanceChange()">
                         <option value="">加载中...</option>
@@ -74,7 +78,7 @@
                     <div class="search-box"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="搜索表名..." oninput="applyFilter()" autocomplete="nope"></div>
                 </div>
                 <div class="toolbar-right">
-                    <button class="btn btn-secondary" onclick="loadTables()"><i class="fas fa-sync-alt"></i> 刷新</button>
+                    <button class="btn btn-secondary" onclick="refreshTablesFromSource()"><i class="fas fa-sync-alt"></i> 刷新</button>
                 </div>
             </div>
             <div class="table-container">
@@ -101,9 +105,10 @@
 </div>
 
 <script src="../../js/config.js"></script>
+<script src="js/db-types.js"></script>
 <script>
 function highlightNav(){var page=window.location.pathname.split('/').pop();document.querySelectorAll('.nav-item').forEach(function(item){var href=item.getAttribute('href');if(href&&href.split('/').pop()===page)item.classList.add('active');else item.classList.remove('active');});}
-let instanceId, allInstances=[], allTables=[], filteredTables=[], tablePage=1, tablePageSize=10;
+let instanceId, selectedDbType='', allInstances=[], allTables=[], filteredTables=[], tablePage=1, tablePageSize=10;
 let currentStructureTable='';
 
 document.addEventListener('DOMContentLoaded', function(){
@@ -117,17 +122,37 @@ async function initPage(){
         allInstances = (await request('/db/instances') || []).filter(function(i){ return i.status === 1; });
         if(!allInstances.length){
             showToast('暂无在线实例，请先在实例管理中配置并刷新','warning');
+            document.getElementById('dbTypeFilter').innerHTML = '<option value="">暂无类型</option>';
             document.getElementById('instanceFilter').innerHTML = '<option value="">暂无在线实例</option>';
             return;
         }
-        renderInstanceFilter();
+        renderDbTypeFilter();
         var params = new URLSearchParams(window.location.search);
         var urlId = params.get('id');
-        if(urlId && allInstances.some(function(inst){ return String(inst.id) === String(urlId); })){
-            instanceId = urlId;
+        var urlType = params.get('dbType');
+        var typeList = collectDbTypesFromInstances(allInstances);
+        var targetInst = urlId ? allInstances.find(function(inst){ return String(inst.id) === String(urlId); }) : null;
+
+        if (targetInst) {
+            selectedDbType = getInstanceDbType(targetInst);
+        } else if (urlType && typeList.indexOf(normalizeDbType(urlType)) >= 0) {
+            selectedDbType = normalizeDbType(urlType);
+        } else if (typeList.length === 1) {
+            selectedDbType = typeList[0];
         } else {
-            instanceId = String(allInstances[0].id);
-            if(urlId) showToast('指定实例离线或不存在，已切换到在线实例','warning');
+            selectedDbType = typeList[0] || '';
+        }
+        document.getElementById('dbTypeFilter').value = selectedDbType;
+        renderInstanceFilter();
+        var candidates = getInstancesBySelectedDbType();
+        if (targetInst) {
+            instanceId = String(urlId);
+        } else if (candidates.length) {
+            instanceId = String(candidates[0].id);
+            if (urlId) showToast('指定实例离线、不存在或类型不匹配，已切换到可用实例', 'warning');
+        } else {
+            showToast('当前数据库类型下暂无在线实例','warning');
+            return;
         }
         syncInstanceSelection();
         loadTables();
@@ -136,9 +161,47 @@ async function initPage(){
     }
 }
 
+function renderDbTypeFilter(){
+    var types = collectDbTypesFromInstances(allInstances);
+    var sel = document.getElementById('dbTypeFilter');
+    sel.innerHTML = types.map(function(t){
+        return '<option value="'+t+'">'+t+'</option>';
+    }).join('');
+}
+
+function getInstancesBySelectedDbType(){
+    if(!selectedDbType) return allInstances.slice();
+    return allInstances.filter(function(inst){
+        return getInstanceDbType(inst) === selectedDbType;
+    });
+}
+
+function onDbTypeFilterChange(){
+    selectedDbType = normalizeDbType(document.getElementById('dbTypeFilter').value);
+    renderInstanceFilter();
+    var candidates = getInstancesBySelectedDbType();
+    if(!candidates.length){
+        instanceId = '';
+        document.getElementById('tableBody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#999;">当前类型暂无在线实例</td></tr>';
+        document.getElementById('pagination').innerHTML = '';
+        updatePageTitle();
+        return;
+    }
+    instanceId = String(candidates[0].id);
+    document.getElementById('searchInput').value = '';
+    document.getElementById('searchInput').dispatchEvent(new Event('input', { bubbles: true }));
+    syncInstanceSelection();
+    loadTables();
+}
+
 function renderInstanceFilter(){
+    var list = getInstancesBySelectedDbType();
     var sel = document.getElementById('instanceFilter');
-    sel.innerHTML = allInstances.map(function(inst){
+    if(!list.length){
+        sel.innerHTML = '<option value="">无在线实例</option>';
+        return;
+    }
+    sel.innerHTML = list.map(function(inst){
         var label = inst.instanceName || inst.dbName || '实例';
         return '<option value="'+inst.id+'">'+label+'</option>';
     }).join('');
@@ -146,9 +209,15 @@ function renderInstanceFilter(){
 
 function syncInstanceSelection(){
     document.getElementById('instanceFilter').value = instanceId;
+    var inst = allInstances.find(function(x){ return String(x.id) === String(instanceId); });
+    if(inst) selectedDbType = getInstanceDbType(inst);
+    if(document.getElementById('dbTypeFilter').value !== selectedDbType){
+        document.getElementById('dbTypeFilter').value = selectedDbType;
+    }
     updatePageTitle();
     var url = new URL(window.location.href);
     url.searchParams.set('id', instanceId);
+    if(selectedDbType) url.searchParams.set('dbType', selectedDbType);
     window.history.replaceState(null, '', url.pathname + url.search);
 }
 
@@ -173,7 +242,6 @@ async function loadTables(){
         var data=await request('/db/instances/'+instanceId+'/tables');
         allTables=data||[];
         document.getElementById('stat-tables').textContent=allTables.length;
-        // Try to get real stats
         try{
             var stats=await request('/db/instances/'+instanceId+'/realstats');
             if(stats){
@@ -183,6 +251,14 @@ async function loadTables(){
         }catch(e){}
         applyFilter();
     }catch(e){showToast('加载表列表失败','error');}
+}
+
+async function refreshTablesFromSource(){
+    try{
+        await request('/db/instances/'+instanceId+'/tables/refresh',{method:'POST'});
+        showToast('表清单已从源库刷新','success');
+        await loadTables();
+    }catch(e){showToast(e.message||'刷新表清单失败','error');}
 }
 
 function applyFilter(){

@@ -1,4 +1,5 @@
 let allInstances=[], filteredInstances=[], allDbTypes=[], selectedDbTypes=[], dbTypeFilterInitialized=false;
+let refreshingInstanceIds={};
 document.addEventListener('DOMContentLoaded', function(){
     if (!assertSubsystemLogin(SUBSYSTEM_CODE.DB_MGMT)) return;
     initUserDropdown(); clearSearchInputs(); loadInstances();
@@ -23,16 +24,16 @@ async function loadInstances(){
         loadStats();
     }catch(e){showToast('加载实例失败','error');}
 }
-function getInstanceDbType(inst){
-    return (inst.dbType || 'MySQL').trim();
+function getInstanceDbTypeFromInst(inst){
+    return getInstanceDbType(inst);
 }
 function collectDbTypes(){
     var types=[];
     allInstances.forEach(function(inst){
-        var t=getInstanceDbType(inst);
+        var t=getInstanceDbTypeFromInst(inst);
         if(types.indexOf(t)<0) types.push(t);
     });
-    types.sort();
+    types.sort(function(a,b){ return DB_TYPES.indexOf(a)-DB_TYPES.indexOf(b); });
     return types;
 }
 function renderDbTypeFilter(){
@@ -115,7 +116,7 @@ function updateDbTypeFilterLabel(){
 function instanceMatchesFilter(inst){
     var keyword=document.getElementById('searchInput').value.trim().toLowerCase();
     var matchKeyword=!keyword||(inst.instanceName||'').toLowerCase().includes(keyword)||(inst.host||'').toLowerCase().includes(keyword);
-    var matchType=!allDbTypes.length||selectedDbTypes.indexOf(getInstanceDbType(inst))>=0;
+    var matchType=!allDbTypes.length||selectedDbTypes.indexOf(getInstanceDbTypeFromInst(inst))>=0;
     return matchKeyword && matchType;
 }
 function escapeHtml(str){
@@ -144,16 +145,18 @@ function buildCardHtml(inst){
     var statusClass=inst.status===1?'online':'offline';
     var statusText=inst.status===1?'在线':'离线';
     var tableCount=inst.status===1?(inst.tableCount||0):0;
+    var isRefreshing=!!refreshingInstanceIds[String(inst.id)];
     var actions = inst.status === 1
         ? '<button class="btn btn-sm btn-primary" onclick="viewTables('+inst.id+')"><i class="fas fa-table"></i> 查看表</button>'
         : '<button class="btn btn-sm btn-primary" disabled title="实例离线，无法查看表"><i class="fas fa-table"></i> 查看表</button>';
     if(hasSubsystemAdmin(SUBSYSTEM_CODE.DB_MGMT)){
         actions+=' <button class="btn-icon" onclick="editInstance('+inst.id+')" title="编辑"><i class="fas fa-edit"></i></button>'+
             ' <button class="btn-icon btn-icon-danger" onclick="deleteInstance('+inst.id+')" title="删除"><i class="fas fa-trash"></i></button>'+
-            ' <button class="btn-icon" onclick="refreshInstance('+inst.id+')" title="刷新连接状态"><i class="fas fa-sync-alt"></i></button>';
+            ' <button class="btn-icon" onclick="refreshInstance('+inst.id+')" title="刷新连接状态"'+(isRefreshing?' disabled':'')+'><i class="fas fa-sync-alt'+(isRefreshing?' fa-spin':'')+'"></i></button>';
     }
+    var cardClass='instance-card'+(isRefreshing?' is-refreshing':'');
     var dot = inst.status===1 ? '<span class="status-dot online"></span>' : '<span class="status-dot offline"></span>';
-    return '<div class="instance-card" id="instance-card-'+inst.id+'">'+
+    return '<div class="'+cardClass+'" id="instance-card-'+inst.id+'">'+
         '<div class="card-header">'+
             '<div class="card-title-row">'+dot+'<span class="card-title">'+(inst.instanceName||'')+'</span></div>'+
             '<span class="card-status '+statusClass+'">'+statusText+'</span>'+
@@ -161,7 +164,8 @@ function buildCardHtml(inst){
         '<div class="card-info-table">'+
             '<div class="info-row"><span class="info-label">主机:</span><span class="info-value">'+(inst.host||'')+':'+(inst.port||3306)+'</span></div>'+
             '<div class="info-row"><span class="info-label">数据库:</span><span class="info-value">'+(inst.dbName||'')+'</span></div>'+
-            '<div class="info-row"><span class="info-label">类型:</span><span class="info-value">'+escapeHtml(getInstanceDbType(inst))+'</span></div>'+
+            (inst.schemaName?'<div class="info-row"><span class="info-label">Schema:</span><span class="info-value">'+escapeHtml(inst.schemaName)+'</span></div>':'')+
+            '<div class="info-row"><span class="info-label">类型:</span><span class="info-value">'+escapeHtml(getInstanceDbTypeFromInst(inst))+'</span></div>'+
             '<div class="info-row"><span class="info-label">表数量:</span><span class="info-value">'+tableCount+'</span></div>'+
             (inst.description?'<div class="info-row"><span class="info-label">描述:</span><span class="info-value">'+inst.description+'</span></div>':'')+
         '</div>'+
@@ -208,9 +212,18 @@ function mergeInstance(updated, singleCardOnly){
     else{ filterInstances(); loadStats(); }
 }
 
+function setCardRefreshing(id, refreshing){
+    var key=String(id);
+    if(refreshing) refreshingInstanceIds[key]=true;
+    else delete refreshingInstanceIds[key];
+    applySingleCardUpdate(id);
+}
+
 /** 刷新单个实例：重连检测并回写最新状态，仅更新该卡片 */
 async function refreshInstanceData(id, silent, singleCardOnly) {
     if(singleCardOnly===undefined) singleCardOnly=true;
+    if(refreshingInstanceIds[String(id)]) return null;
+    setCardRefreshing(id, true);
     try {
         var updated = await request('/db/instances/' + id + '/refresh', { method: 'POST' });
         if (updated) {
@@ -220,6 +233,9 @@ async function refreshInstanceData(id, silent, singleCardOnly) {
         }
     } catch (e) {
         if (!silent) showToast(e.message || '刷新失败', 'error');
+    } finally {
+        delete refreshingInstanceIds[String(id)];
+        applySingleCardUpdate(id);
     }
     try {
         var latest = await request('/db/instances/' + id);
@@ -227,17 +243,43 @@ async function refreshInstanceData(id, silent, singleCardOnly) {
     } catch (e2) { /* ignore */ }
     return null;
 }
-function viewTables(id){ window.location.href='tables.html?id='+id; }
+async function refreshInstance(id){
+    if(refreshingInstanceIds[String(id)]) return;
+    await refreshInstanceData(id, false, true);
+}
+async function refreshAll(){
+    var btn=document.querySelector('#adminBtns .btn-secondary');
+    if(btn) btn.disabled=true;
+    try{
+        await request('/db/instances/refresh',{method:'POST'});
+        showToast('全部刷新成功','success');
+        await loadInstances();
+    }catch(e){showToast(e.message||'刷新失败','error');}
+    finally{if(btn) btn.disabled=false;}
+}
+function onInstDbTypeChange(resetPort){
+    var dbType=document.getElementById('inst-dbtype').value;
+    applyInstDbTypeForm(dbType, !!resetPort);
+}
+function viewTables(id){
+    var inst=allInstances.find(function(x){return String(x.id)===String(id);});
+    var url='tables.html?id='+encodeURIComponent(id);
+    if(inst) url+='&dbType='+encodeURIComponent(getInstanceDbTypeFromInst(inst));
+    window.location.href=url;
+}
 
 function openAddInstance(){
     document.getElementById('instanceModalTitle').textContent='新增实例';
     document.getElementById('inst-pass-label').textContent='密码 *';
     document.getElementById('inst-pass').placeholder='请输入密码';
     document.getElementById('inst-id').value='';
+    document.getElementById('inst-dbtype').value='MySQL';
+    document.getElementById('inst-dbtype').disabled=false;
+    onInstDbTypeChange(true);
     document.getElementById('inst-name').value='';
     document.getElementById('inst-host').value='';
-    document.getElementById('inst-port').value='3306';
     document.getElementById('inst-dbname').value='';
+    document.getElementById('inst-schema').value='';
     document.getElementById('inst-user').value='';
     document.getElementById('inst-pass').value='';
     document.getElementById('inst-desc').value='';
@@ -250,10 +292,14 @@ function editInstance(id){
     document.getElementById('inst-pass-label').textContent='密码（留空不修改）';
     document.getElementById('inst-pass').placeholder='留空则保持原密码';
     document.getElementById('inst-id').value=inst.id;
+    document.getElementById('inst-dbtype').value=getInstanceDbTypeFromInst(inst);
+    document.getElementById('inst-dbtype').disabled=false;
+    onInstDbTypeChange(false);
     document.getElementById('inst-name').value=inst.instanceName||'';
     document.getElementById('inst-host').value=inst.host||'';
-    document.getElementById('inst-port').value=inst.port||3306;
+    document.getElementById('inst-port').value=inst.port||DB_TYPE_CONFIG[getInstanceDbTypeFromInst(inst)].port;
     document.getElementById('inst-dbname').value=inst.dbName||'';
+    document.getElementById('inst-schema').value=inst.schemaName||'';
     document.getElementById('inst-user').value=inst.dbUsername||'';
     document.getElementById('inst-pass').value='';
     document.getElementById('inst-desc').value=inst.description||'';
@@ -278,13 +324,17 @@ async function handleSaveInstance(){
     var dbUser=document.getElementById('inst-user').value.trim();
     var dbPass=document.getElementById('inst-pass').value.trim();
     // 新增时密码必填，编辑时密码可为空（空则不更改，测试连接时用库中密码）
+    var dbType=normalizeDbType(document.getElementById('inst-dbtype').value);
+    var schemaName=(document.getElementById('inst-schema').value||'').trim();
     if(!name||!host||!dbName||!dbUser){showToast('请填写必填项','warning');return;}
     if(!id && !dbPass){showToast('新增实例密码不能为空','warning');return;}
     if(isDuplicateInstanceName(name, id || null)){
         showToast('实例名称已存在，请使用其他名称','warning');
         return;
     }
-    var body={instanceName:name,host:host,port:parseInt(port),dbName:dbName,dbType:'MySQL',description:document.getElementById('inst-desc').value.trim()};
+    var body={instanceName:name,host:host,port:parseInt(port),dbName:dbName,dbType:dbType,description:document.getElementById('inst-desc').value.trim()};
+    if(dbTypeHasSchema(dbType)) body.schemaName=schemaName || null;
+    else body.schemaName=null;
     body['db'+'Username']=dbUser;
     if(dbPass){ body['db'+'Pass'+'word']=dbPass; }
     try{
@@ -309,12 +359,6 @@ async function deleteInstance(id){
     if(!confirm('确定删除该实例？'))return;
     try{await request('/db/instances/'+id,{method:'DELETE'});showToast('删除成功','success');loadInstances();}catch(e){showToast(e.message||'删除失败','error');}
 }
-async function refreshInstance(id){
-    await refreshInstanceData(id, false);
-}
-async function refreshAll(){
-    try{await request('/db/instances/refresh',{method:'POST'});showToast('全部刷新成功','success');loadInstances();}catch(e){showToast(e.message||'刷新失败','error');}
-}
 async function testConnection(){
     var instId=document.getElementById('inst-id').value;
     var host=document.getElementById('inst-host').value.trim();
@@ -322,9 +366,12 @@ async function testConnection(){
     var dbName=document.getElementById('inst-dbname').value.trim();
     var dbUser=document.getElementById('inst-user').value.trim();
     var dbPass=document.getElementById('inst-pass').value.trim();
+    var dbType=normalizeDbType(document.getElementById('inst-dbtype').value);
+    var schemaName=(document.getElementById('inst-schema').value||'').trim();
     if(!host||!dbName||!dbUser){showToast('请填写连接信息','warning');return;}
     if(!instId && !dbPass){showToast('新增实例请填写密码','warning');return;}
-    var body={host:host,port:parseInt(port),dbName:dbName};
+    var body={host:host,port:parseInt(port),dbName:dbName,dbType:dbType};
+    if(dbTypeHasSchema(dbType)) body.schemaName=schemaName || null;
     body['db'+'Username']=dbUser;
     // 编辑：有输入则用输入框密码，无输入则后端按 id 取库中密码
     if(dbPass){ body['db'+'Pass'+'word']=dbPass; }

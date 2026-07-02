@@ -352,6 +352,7 @@ CREATE TABLE portal_dbmgmt.biz_db_instance (
     `host` VARCHAR(100) NOT NULL COMMENT '主机地址',
     `port` INT NOT NULL DEFAULT 3306 COMMENT '端口',
     `db_name` VARCHAR(100) DEFAULT NULL COMMENT '数据库名',
+    `schema_name` VARCHAR(100) DEFAULT NULL COMMENT 'Schema名称(PostgreSQL/Oracle等)',
     `db_username` VARCHAR(50) DEFAULT NULL COMMENT '连接用户名',
     `db_password` VARCHAR(200) DEFAULT NULL COMMENT '连接密码',
     `db_type` VARCHAR(20) NOT NULL DEFAULT 'MySQL' COMMENT '数据库类型',
@@ -366,6 +367,27 @@ CREATE TABLE portal_dbmgmt.biz_db_instance (
     `updated_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='数据库实例表';
+
+DROP TABLE IF EXISTS portal_dbmgmt.biz_db_table_snapshot;
+
+CREATE TABLE portal_dbmgmt.biz_db_table_snapshot (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键',
+    `instance_name` VARCHAR(100) NOT NULL COMMENT '实例名称',
+    `table_name` VARCHAR(200) NOT NULL COMMENT '表名',
+    `schema_name` VARCHAR(100) DEFAULT NULL COMMENT 'Schema名称',
+    `table_comment` VARCHAR(500) DEFAULT NULL COMMENT '表注释',
+    `engine` VARCHAR(50) DEFAULT NULL COMMENT '存储引擎/类型',
+    `data_bytes` BIGINT DEFAULT 0 COMMENT '数据大小(字节)',
+    `data_length` VARCHAR(20) DEFAULT NULL COMMENT '数据大小(展示)',
+    `create_time` VARCHAR(50) DEFAULT NULL COMMENT '创建时间',
+    `synced_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '同步时间',
+    PRIMARY KEY (`id`),
+    KEY `idx_instance_name` (`instance_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='数据库实例表清单快照';
+
+-- 已有环境增量升级:
+-- ALTER TABLE portal_dbmgmt.biz_db_instance ADD COLUMN `schema_name` VARCHAR(100) DEFAULT NULL COMMENT 'Schema名称(PostgreSQL/Oracle等)' AFTER `db_name`;
+-- CREATE TABLE portal_dbmgmt.biz_db_table_snapshot (...同上...);
 
 INSERT INTO portal_dbmgmt.biz_db_instance (`instance_name`, `host`, `port`, `db_name`, `db_username`, `db_password`, `db_type`, `charset`, `table_count`, `storage_size`, `active_connections`, `max_connections`, `status`, `description`) VALUES
 ('portal_main', 'localhost', 3306, 'portal_main', 'root', 'root', 'MySQL', 'utf8mb4', 7, '128 MB', 12, 100, 1, '门户管理主库'),

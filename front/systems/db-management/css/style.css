@@ -64,6 +64,7 @@ a { text-decoration:none; color:inherit; }
 /* Instance Cards */
 .instances-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px,1fr)); gap:20px; }
 .instance-card { background:#fff; border-radius:8px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.08); position:relative; transition:all 0.2s; }
+.instance-card.is-refreshing { opacity:0.85; }
 .instance-card:hover { box-shadow:0 4px 16px rgba(0,0,0,0.12); }
 .instance-card .card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
 .instance-card .card-title-row { display:flex; align-items:center; gap:8px; }
@@ -93,6 +94,7 @@ a { text-decoration:none; color:inherit; }
 .form-group label { display:block; margin-bottom:6px; font-size:14px; font-weight:500; }
 .form-group input, .form-group select, .form-group textarea { width:100%; padding:8px 12px; border:1px solid #e0e0e0; border-radius:6px; font-size:14px; outline:none; box-sizing:border-box; }
 .form-group input:focus { border-color:#3B82F6; }
+.form-hint { margin-top:6px; font-size:12px; color:#64748b; line-height:1.5; }
 
 /* Table (for tables.html) */
 .table-container { background:#fff; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.05); overflow:hidden; }

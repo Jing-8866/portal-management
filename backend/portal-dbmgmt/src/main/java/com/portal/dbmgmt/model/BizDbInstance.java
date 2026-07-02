@@ -15,6 +15,7 @@ public class BizDbInstance implements Serializable {
     private String host;
     private Integer port;
     private String dbName;
+    private String schemaName;
     private String dbType;
     private String dbUsername;
     private String dbPassword;

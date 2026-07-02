@@ -64,12 +64,25 @@
         <div class="modal-header"><h3 id="instanceModalTitle">新增实例</h3><button class="modal-close" onclick="closeInstanceModal()">&times;</button></div>
         <div class="modal-body">
             <input type="hidden" id="inst-id">
+            <div class="form-group">
+                <label for="inst-dbtype">数据库类型 *</label>
+                <select id="inst-dbtype" onchange="onInstDbTypeChange(true)">
+                    <option value="MySQL">MySQL</option>
+                    <option value="Oracle">Oracle</option>
+                    <option value="PostgreSQL">PostgreSQL</option>
+                </select>
+                <p id="inst-type-hint" class="form-hint"></p>
+            </div>
             <div class="form-group"><label>实例名称 *</label><input type="text" id="inst-name" placeholder="请输入实例名称" autocomplete="off" data-clear-on-open="1"></div>
             <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;">
                 <div class="form-group"><label>主机地址 *</label><input type="text" id="inst-host" placeholder="如: localhost" autocomplete="off" data-clear-on-open="1"></div>
                 <div class="form-group"><label>端口 *</label><input type="number" id="inst-port" value="3306" autocomplete="off"></div>
             </div>
-            <div class="form-group"><label>数据库名 *</label><input type="text" id="inst-dbname" placeholder="请输入数据库名" autocomplete="off" data-clear-on-open="1"></div>
+            <div class="form-group"><label id="inst-dbname-label">数据库名 *</label><input type="text" id="inst-dbname" placeholder="请输入数据库名" autocomplete="off" data-clear-on-open="1"></div>
+            <div class="form-group" id="inst-schema-group" style="display:none;">
+                <label id="inst-schema-label">Schema</label>
+                <input type="text" id="inst-schema" placeholder="请输入 Schema" autocomplete="off" data-clear-on-open="1">
+            </div>
             <div class="form-group"><label>用户名 *</label><input type="text" id="inst-user" placeholder="请输入用户名" autocomplete="off" data-clear-on-open="1"></div>
             <div class="form-group"><label id="inst-pass-label">密码 *</label><input type="password" id="inst-pass" placeholder="请输入密码" autocomplete="new-password" data-clear-on-open="1"></div>
             <div class="form-group"><label>描述</label><textarea id="inst-desc" rows="2" placeholder="请输入描述"></textarea></div>
@@ -83,6 +96,7 @@
 </div>
 
 <script src="../../js/config.js"></script>
+<script src="js/db-types.js"></script>
 <script>
 function highlightNav(){var page=window.location.pathname.split('/').pop();document.querySelectorAll('.nav-item').forEach(function(item){var href=item.getAttribute('href');if(href&&href.split('/').pop()===page)item.classList.add('active');else item.classList.remove('active');});}
 document.addEventListener('DOMContentLoaded', function(){ highlightNav(); });
