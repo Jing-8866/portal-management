@@ -1,0 +1,21 @@
+
+### 环境要求
+
+- 现代浏览器（Chrome、Firefox、Edge）
+- 后端服务运行在 `http://localhost:8080`
+
+### 运行方式
+
+本项目为纯静态页面，无需构建，直接通过以下任一方式访问：
+
+1. **直接打开**：用浏览器打开 `login.html`
+2. **HTTP Server**（推荐，避免跨域问题）：
+   ```bash
+   # Python 方式
+   cd front
+   python -m http.server 3000
+
+   # Node.js 方式
+   npx http-server -p 3000
+   ```
+   访问 `http://localhost:3000/login.html`
