@@ -18,7 +18,7 @@ logs/
 
 # 排除文件
 开发指引.md
-outer_file/
+self_file/
 
 # OS
 .DS_Store
